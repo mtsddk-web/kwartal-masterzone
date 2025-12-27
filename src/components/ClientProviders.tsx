@@ -1,6 +1,7 @@
 'use client';
 
 import { ToastProvider } from './effects';
+import { AuthProvider } from '@/hooks/useAuth';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -8,9 +9,10 @@ interface ClientProvidersProps {
 
 export default function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <ToastProvider>
-      {/* Main content - animations disabled for performance */}
-      {children}
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    </AuthProvider>
   );
 }

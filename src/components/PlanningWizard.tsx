@@ -27,6 +27,7 @@ import {
   RisksStep,
   YearContextStep,
 } from './steps';
+import UserMenu from './auth/UserMenu';
 
 const STEPS = [
   'Kwartał',
@@ -80,9 +81,13 @@ export default function PlanningWizard() {
   const {
     isSaving,
     showRestorePrompt,
+    showMigrationPrompt,
     formatLastSaved,
     handleRestore,
     handleDismissRestore,
+    handleMigrate,
+    handleDismissMigration,
+    isLoggedIn,
   } = usePlanAutoSave(plan, setPlan);
 
   // Start timer when planning begins
@@ -337,6 +342,56 @@ export default function PlanningWizard() {
         )}
       </AnimatePresence>
 
+      {/* Migration prompt modal (for logged-in users with local data) */}
+      <AnimatePresence>
+        {showMigrationPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10001] bg-night-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-night-900 border border-night-700 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-display font-semibold text-white mb-2">
+                    Przenieś plan do chmury
+                  </h3>
+                  <p className="text-slate-400 text-sm mb-4">
+                    Masz zapisany plan lokalnie. Czy chcesz go przenieść do swojego konta?
+                    Po przeniesieniu będzie dostępny na wszystkich urządzeniach.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleMigrate}
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all"
+                    >
+                      Przenieś
+                    </button>
+                    <button
+                      onClick={handleDismissMigration}
+                      className="flex-1 px-4 py-2.5 bg-night-800 text-slate-300 font-medium rounded-xl border border-night-700 hover:bg-night-700 transition-all"
+                    >
+                      Zacznij od nowa
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Background - simplified for performance */}
 
       {/* Header */}
@@ -366,6 +421,7 @@ export default function PlanningWizard() {
             <AutoSaveIndicator
               isSaving={isSaving}
               lastSaved={formatLastSaved()}
+              isLoggedIn={isLoggedIn}
               className="hidden md:flex"
             />
 
@@ -401,6 +457,9 @@ export default function PlanningWizard() {
                 {plan.quarter} {plan.year}
               </span>
             )}
+
+            {/* User menu */}
+            <UserMenu />
           </div>
         </div>
       </header>
