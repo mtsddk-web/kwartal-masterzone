@@ -21,7 +21,7 @@ export const helpContent: Record<string, HelpSection> = {
       'Opisz obrazowo jak będzie wyglądało Twoje życie po osiągnięciu celu. Użyj zmysłów - co zobaczysz, usłyszysz, poczujesz? Im bardziej konkretny obraz, tym silniejsza motywacja.',
     examples: [
       'Budzę się w poniedziałek z energią. Dashboard pokazuje 50 aktywnych klientów, zespół działa bez mojego udziału.',
-      'Siedzę w kawiarni z laptopem, pracując 4h dziennie. Na koncie mam stabilne 30k MRR.',
+      'Siedzę w kawiarni z laptopem, pracując 4h dziennie. Na koncie mam stabilne 30k miesięcznie.',
       'Kończę pracę o 15:00, idę na siłownię. Firma generuje przychód bez moich interwencji.',
     ],
     tips: [
@@ -93,7 +93,7 @@ export const helpContent: Record<string, HelpSection> = {
       'Jedna kluczowa metryka, która najlepiej odzwierciedla sukces tego kwartału. Jeśli osiągniesz tylko tę jedną rzecz, uznasz kwartał za udany.',
     examples: [
       '25 nowych płacących klientów',
-      '50 000 PLN przychodu miesięcznie (MRR)',
+      '50 000 PLN przychodu miesięcznie',
       'Produkt live z 100 aktywnych użytkowników',
       '3 zamknięte kontrakty B2B powyżej 10k',
       '10 000 subskrybentów newslettera',
@@ -108,7 +108,7 @@ export const helpContent: Record<string, HelpSection> = {
       { q: 'Co jeśli mam kilka ważnych metryk?', a: 'Wybierz JEDNĄ najważniejszą. Pozostałe mogą być metrykami wspierającymi. North Star to kompas - może być tylko jeden.' },
       { q: 'Jak wybrać właściwą metrykę?', a: 'Zadaj sobie pytanie: "Gdybym osiągnął tylko to jedno, czy byłbym zadowolony z kwartału?" Jeśli tak - to Twój North Star.' },
       { q: 'Czy North Star może się zmienić w trakcie kwartału?', a: 'Nie powinien. Jeśli się zmienia, znaczy że nie wybrałeś właściwego. Przemyśl dobrze na początku.' },
-      { q: 'Jaki format North Star jest najlepszy?', a: 'Konkretna liczba + jednostka. Np. "25 klientów", "50k PLN MRR", "100 aktywnych użytkowników". Unikaj "więcej klientów" - to nie jest mierzalne.' },
+      { q: 'Jaki format North Star jest najlepszy?', a: 'Konkretna liczba + jednostka. Np. "25 klientów", "50k PLN miesięcznie", "100 aktywnych użytkowników". Unikaj "więcej klientów" - to nie jest mierzalne.' },
     ],
   },
 
@@ -157,7 +157,7 @@ export const helpContent: Record<string, HelpSection> = {
       { q: 'Czy cele muszą być mierzalne?', a: 'TAK. "Być lepszym" to nie cel. "Zdobyć 10 klientów" to cel. Musisz wiedzieć czy osiągnąłeś.' },
       { q: 'Co wpisać w "dlaczego"?', a: 'Uzasadnienie biznesowe lub osobiste. Dlaczego TEN cel, a nie inny? Jak wpływa na roczny plan?' },
       { q: 'Czy cel może być jakościowy?', a: 'Może, ale dodaj mierzalny wskaźnik. Np. "Lepszy produkt" → "NPS wzrośnie z 30 do 50".' },
-      { q: 'Jak sformułować dobry cel?', a: 'Użyj formuły: CZASOWNIK + LICZBA + RZECZ. Np. "Zdobyć 25 klientów", "Uruchomić 1 produkt", "Osiągnąć 50k MRR".' },
+      { q: 'Jak sformułować dobry cel?', a: 'Użyj formuły: CZASOWNIK + LICZBA + RZECZ. Np. "Zdobyć 25 klientów", "Uruchomić 1 produkt", "Osiągnąć 50k przychodu miesięcznie".' },
     ],
   },
 
@@ -216,9 +216,9 @@ export const helpContent: Record<string, HelpSection> = {
       'Jak zmierzysz sukces? Jakie konkretne KPI pokażą, że osiągasz cel? Wybierz 2-3 metryki, które będziesz śledzić co tydzień.',
     examples: [
       'Nowi klienci w kwartale | Target: 25',
-      'Demo → Klient conversion | Target: 30%',
-      'Churn rate miesięczny | Target: <5%',
-      'MRR (Monthly Recurring Revenue) | Target: 50 000 PLN',
+      'Konwersja demo → klient | Target: 30%',
+      'Odpływ klientów miesięcznie | Target: <5%',
+      'Przychód miesięczny | Target: 50 000 PLN',
       'Liczba leadów tygodniowo | Target: 20',
     ],
     tips: [
@@ -337,7 +337,7 @@ export const helpContent: Record<string, HelpSection> = {
       'Zanim zaplanujemy przyszłość, podsumujmy co się wydarzyło. Uczciwa analiza poprzedniego okresu to fundament dobrego planu.',
     examples: [
       'Cel był +20 klientów, zrobiłem +12. Dlaczego? Za mało leadów w miesiącu 1.',
-      'Zadziałało: cold calling, nie zadziałało: reklamy na FB - za wysoki CPC.',
+      'Zadziałało: dzwonienie do klientów, nie zadziałało: reklamy na FB - za drogi koszt kliknięcia.',
       'Największa lekcja: powinienem był zatrudnić wcześniej, robiłem za dużo sam.',
       'Co bym zrobił inaczej: zacząłbym od jednego kanału, nie trzech.',
       'Sukces: system referralowy - 30% nowych klientów z poleceń.',
@@ -360,11 +360,11 @@ export const helpContent: Record<string, HelpSection> = {
     description:
       'Kierunek na cały rok. Kwartalne cele powinny być krokami do rocznej wizji. Bez szerszego kontekstu łatwo zagubić się w szczegółach.',
     examples: [
-      'Wizja roczna: Rentowny biznes z 3-osobowym zespołem, 100k ARR, praca 30h/tydzień',
+      'Wizja roczna: Rentowny biznes z 3-osobowym zespołem, 100k przychodu rocznie, praca 30h/tydzień',
       'North Star roczny: 100 płacących klientów (obecnie: 25)',
       'Cel roczny: Osiągnąć 500k przychodu, zatrudnić 2 osoby, uruchomić drugi produkt',
       'Cel roczny: Przejść z freelancera do agencji - 5 stałych klientów, 1 pracownik',
-      'Cel roczny: Zwalidować produkt, osiągnąć product-market fit, 1000 użytkowników',
+      'Cel roczny: Zwalidować produkt, znaleźć dopasowanie do rynku, 1000 użytkowników',
     ],
     tips: [
       '1 zdanie wizji > długi opis',
@@ -374,8 +374,8 @@ export const helpContent: Record<string, HelpSection> = {
     qa: [
       { q: 'Czy muszę mieć plan roczny?', a: 'Pomaga, ale nie jest wymagany. Plan kwartalny może działać samodzielnie. Roczny daje szerszy kontekst.' },
       { q: 'Jak powiązać plan kwartalny z rocznym?', a: 'Kwartalne cele powinny być "kawałkami" celu rocznego. Np. roczny: 100 klientów → Q1: 25, Q2: 25, itd.' },
-      { q: 'Co jeśli nie wiem co będzie za rok?', a: 'Napisz kierunek, nie szczegóły. "Zbudować rentowny biznes z 100k ARR" - to wystarczy.' },
-      { q: 'Jak napisać dobrą wizję roczną?', a: 'Opisz stan docelowy: przychód, zespół, styl pracy, produkt. Np. "100k ARR, 3-osobowy zespół, praca 30h/tyg, 2 produkty live".' },
+      { q: 'Co jeśli nie wiem co będzie za rok?', a: 'Napisz kierunek, nie szczegóły. "Zbudować rentowny biznes z 100k przychodu rocznie" - to wystarczy.' },
+      { q: 'Jak napisać dobrą wizję roczną?', a: 'Opisz stan docelowy: przychód, zespół, styl pracy, produkt. Np. "100k rocznie, 3-osobowy zespół, praca 30h/tyg, 2 produkty live".' },
     ],
   },
 };
