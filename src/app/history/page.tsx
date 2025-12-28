@@ -21,41 +21,65 @@ export default function HistoryPage() {
   const router = useRouter();
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Redirect if not logged in - but wait for auth to fully load
   useEffect(() => {
-    if (!loading && (!user || !isConfigured)) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, isConfigured, router]);
+  }, [user, loading, router]);
 
+  // Fetch plans when user is available
   useEffect(() => {
-    if (!user || !isSupabaseConfigured()) {
+    // Wait for auth to load
+    if (loading) return;
+
+    // If no user, don't fetch (will redirect)
+    if (!user) {
+      setLoadingPlans(false);
+      return;
+    }
+
+    // If Supabase not configured, show error
+    if (!isSupabaseConfigured()) {
+      setError('Baza danych nie jest skonfigurowana');
       setLoadingPlans(false);
       return;
     }
 
     const fetchPlans = async () => {
-      const supabase = createClient();
-      if (!supabase) {
+      try {
+        const supabase = createClient();
+        if (!supabase) {
+          setError('Nie można połączyć z bazą danych');
+          setLoadingPlans(false);
+          return;
+        }
+
+        const { data, error: fetchError } = await supabase
+          .from('quarterly_plans')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('year', { ascending: false })
+          .order('quarter', { ascending: false });
+
+        if (fetchError) {
+          console.error('Fetch plans error:', fetchError);
+          setError('Nie udało się pobrać planów');
+        } else if (data) {
+          setPlans(data as PlanSummary[]);
+        }
+      } catch (err) {
+        console.error('Fetch plans exception:', err);
+        setError('Wystąpił błąd podczas pobierania planów');
+      } finally {
         setLoadingPlans(false);
-        return;
       }
-
-      const { data, error } = await supabase
-        .from('quarterly_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('year', { ascending: false })
-        .order('quarter', { ascending: false });
-
-      if (!error && data) {
-        setPlans(data as PlanSummary[]);
-      }
-      setLoadingPlans(false);
     };
 
     fetchPlans();
-  }, [user]);
+  }, [user, loading]);
 
   if (loading || loadingPlans) {
     return (
@@ -110,8 +134,15 @@ export default function HistoryPage() {
           </div>
         </div>
 
+        {/* Error state */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Plans grid */}
-        {plans.length === 0 ? (
+        {!error && plans.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-night-800 flex items-center justify-center">
               <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -130,7 +161,7 @@ export default function HistoryPage() {
               </svg>
             </Link>
           </div>
-        ) : (
+        ) : !error && plans.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {plans.map((plan) => {
               const progress = getProgress(plan.plan_data);
@@ -177,7 +208,7 @@ export default function HistoryPage() {
               );
             })}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

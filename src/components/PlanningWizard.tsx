@@ -255,7 +255,7 @@ export default function PlanningWizard() {
   // Summary page with celebration
   if (showSummary) {
     return (
-      <div className="min-h-screen py-8 px-4 relative bg-night-950">
+      <div className="min-h-screen py-8 px-4 relative bg-slate-50 dark:bg-night-950">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -270,11 +270,11 @@ export default function PlanningWizard() {
             className="text-center mb-8"
           >
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-ember-500/20 to-indigo-500/20 rounded-2xl border border-ember-500/30">
-              <svg className="w-6 h-6 text-ember-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6 text-ember-500 dark:text-ember-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
-              <span className="text-white font-medium">
-                Plan ukończony w <span className="text-ember-400 font-bold">{formatTime(seconds)}</span>
+              <span className="text-slate-900 dark:text-white font-medium">
+                Plan ukończony w <span className="text-ember-500 dark:text-ember-400 font-bold">{formatTime(seconds)}</span>
               </span>
             </div>
           </motion.div>
@@ -300,37 +300,37 @@ export default function PlanningWizard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10001] bg-night-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[10001] bg-black/50 dark:bg-night-950/80 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-night-900 border border-night-700 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+              className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-700 rounded-2xl p-6 max-w-md w-full shadow-2xl"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ember-500/20 to-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-ember-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-6 h-6 text-ember-500 dark:text-ember-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-display font-semibold text-white mb-2">
+                  <h3 className="text-lg font-display font-semibold text-slate-900 dark:text-white mb-2">
                     Znaleziono zapisany plan
                   </h3>
-                  <p className="text-slate-400 text-sm mb-4">
+                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
                     Masz niezapisany plan z poprzedniej sesji. Czy chcesz go przywrócić?
                   </p>
                   <div className="flex gap-3">
                     <button
                       onClick={handleRestore}
-                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-ember-500 to-ember-600 text-night-900 font-medium rounded-xl hover:from-ember-400 hover:to-ember-500 transition-all"
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-ember-500 to-ember-600 text-white dark:text-night-900 font-medium rounded-xl hover:from-ember-400 hover:to-ember-500 transition-all"
                     >
                       Przywróć
                     </button>
                     <button
                       onClick={handleDismissRestore}
-                      className="flex-1 px-4 py-2.5 bg-night-800 text-slate-300 font-medium rounded-xl border border-night-700 hover:bg-night-700 transition-all"
+                      className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-night-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl border border-slate-200 dark:border-night-700 hover:bg-slate-200 dark:hover:bg-night-700 transition-all"
                     >
                       Zacznij od nowa
                     </button>
@@ -349,25 +349,25 @@ export default function PlanningWizard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10001] bg-night-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[10001] bg-black/50 dark:bg-night-950/80 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-night-900 border border-night-700 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+              className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-700 rounded-2xl p-6 max-w-md w-full shadow-2xl"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-6 h-6 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-display font-semibold text-white mb-2">
+                  <h3 className="text-lg font-display font-semibold text-slate-900 dark:text-white mb-2">
                     Przenieś plan do chmury
                   </h3>
-                  <p className="text-slate-400 text-sm mb-4">
+                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
                     Masz zapisany plan lokalnie. Czy chcesz go przenieść do swojego konta?
                     Po przeniesieniu będzie dostępny na wszystkich urządzeniach.
                   </p>
@@ -380,7 +380,7 @@ export default function PlanningWizard() {
                     </button>
                     <button
                       onClick={handleDismissMigration}
-                      className="flex-1 px-4 py-2.5 bg-night-800 text-slate-300 font-medium rounded-xl border border-night-700 hover:bg-night-700 transition-all"
+                      className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-night-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl border border-slate-200 dark:border-night-700 hover:bg-slate-200 dark:hover:bg-night-700 transition-all"
                     >
                       Zacznij od nowa
                     </button>
@@ -395,7 +395,7 @@ export default function PlanningWizard() {
       {/* Background - simplified for performance */}
 
       {/* Header */}
-      <header className="py-6 px-4 border-b border-night-800/50 relative z-10">
+      <header className="py-6 px-4 border-b border-slate-200 dark:border-night-800/50 relative z-10 bg-white/80 dark:bg-transparent backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
@@ -408,7 +408,7 @@ export default function PlanningWizard() {
               </svg>
             </motion.div>
             <div>
-              <h1 className="font-display text-xl font-semibold text-white">
+              <h1 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
                 Plan Kwartału
               </h1>
               <p className="text-sm text-slate-500">MasterZone</p>
@@ -427,16 +427,16 @@ export default function PlanningWizard() {
 
             {/* Timer */}
             <div className="hidden sm:flex items-center gap-2 text-sm">
-              <svg className="w-4 h-4 text-ember-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-ember-500 dark:text-ember-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-ember-400 font-mono">{formatTime(seconds)}</span>
+              <span className="text-ember-500 dark:text-ember-400 font-mono">{formatTime(seconds)}</span>
             </div>
 
             {/* Sound toggle */}
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 rounded-lg bg-night-800/50 text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-lg bg-slate-100 dark:bg-night-800/50 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               title={soundEnabled ? 'Wyłącz dźwięki' : 'Włącz dźwięki'}
             >
               {soundEnabled ? (
@@ -453,7 +453,7 @@ export default function PlanningWizard() {
 
             {/* Quarter badge */}
             {plan.quarter && plan.year && (
-              <span className="px-3 py-1.5 bg-night-800/80 backdrop-blur rounded-lg text-sm text-slate-300 border border-night-700/50">
+              <span className="px-3 py-1.5 bg-slate-100 dark:bg-night-800/80 backdrop-blur rounded-lg text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-night-700/50">
                 {plan.quarter} {plan.year}
               </span>
             )}
@@ -495,12 +495,12 @@ export default function PlanningWizard() {
       </main>
 
       {/* Navigation buttons */}
-      <footer className="py-6 px-4 border-t border-night-800/50 relative z-10">
+      <footer className="py-6 px-4 border-t border-slate-200 dark:border-night-800/50 relative z-10 bg-white/80 dark:bg-transparent backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <motion.button
             onClick={prevStep}
             disabled={currentStep === 0}
-            className="px-6 py-3 bg-night-800 border border-night-700 text-slate-300 rounded-xl hover:bg-night-700 hover:text-white transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-3 bg-slate-100 dark:bg-night-800 border border-slate-200 dark:border-night-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-night-700 hover:text-slate-900 dark:hover:text-white transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2"
             whileHover={{ scale: currentStep === 0 ? 1 : 1.02 }}
             whileTap={{ scale: currentStep === 0 ? 1 : 0.98 }}
           >
@@ -511,7 +511,7 @@ export default function PlanningWizard() {
           </motion.button>
 
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="text-ember-400 font-medium">{currentStep + 1}</span>
+            <span className="text-ember-500 dark:text-ember-400 font-medium">{currentStep + 1}</span>
             <span>/</span>
             <span>{STEPS.length}</span>
           </div>

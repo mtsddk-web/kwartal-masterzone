@@ -12,7 +12,7 @@ export default function ProgressBar({ currentStep, totalSteps, steps }: Progress
   return (
     <div className="w-full mb-12">
       {/* Progress bar */}
-      <div className="relative h-1 bg-night-800 rounded-full overflow-hidden mb-4">
+      <div className="relative h-1 bg-slate-200 dark:bg-night-800 rounded-full overflow-hidden mb-4">
         <div
           className="absolute top-0 left-0 h-full bg-gradient-to-r from-ember-500 to-ember-400 transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
@@ -26,19 +26,19 @@ export default function ProgressBar({ currentStep, totalSteps, steps }: Progress
             key={step}
             className={`flex items-center gap-2 transition-all duration-300 ${
               index < currentStep
-                ? 'text-ember-400'
+                ? 'text-ember-500 dark:text-ember-400'
                 : index === currentStep
-                ? 'text-white'
-                : 'text-slate-500'
+                ? 'text-slate-900 dark:text-white'
+                : 'text-slate-400 dark:text-slate-500'
             }`}
           >
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
                 index < currentStep
-                  ? 'bg-ember-500 text-night-900'
+                  ? 'bg-ember-500 text-white dark:text-night-900'
                   : index === currentStep
-                  ? 'bg-night-700 text-white ring-2 ring-ember-500/50'
-                  : 'bg-night-800 text-slate-500'
+                  ? 'bg-slate-200 dark:bg-night-700 text-slate-900 dark:text-white ring-2 ring-ember-500/50'
+                  : 'bg-slate-100 dark:bg-night-800 text-slate-400 dark:text-slate-500'
               }`}
             >
               {index < currentStep ? (
@@ -56,9 +56,9 @@ export default function ProgressBar({ currentStep, totalSteps, steps }: Progress
 
       {/* Mobile step indicator */}
       <div className="flex md:hidden justify-center items-center gap-2 text-sm">
-        <span className="text-ember-400 font-medium">Krok {currentStep + 1}</span>
+        <span className="text-ember-500 dark:text-ember-400 font-medium">Krok {currentStep + 1}</span>
         <span className="text-slate-500">z {totalSteps}</span>
-        <span className="text-slate-400 ml-2">{steps[currentStep]}</span>
+        <span className="text-slate-600 dark:text-slate-400 ml-2">{steps[currentStep]}</span>
       </div>
     </div>
   );

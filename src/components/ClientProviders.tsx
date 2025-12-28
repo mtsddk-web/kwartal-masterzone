@@ -2,6 +2,7 @@
 
 import { ToastProvider } from './effects';
 import { AuthProvider } from '@/hooks/useAuth';
+import { ThemeProvider } from '@/hooks/useTheme';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -9,10 +10,12 @@ interface ClientProvidersProps {
 
 export default function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        {children}
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
