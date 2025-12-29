@@ -172,12 +172,40 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
       const jsPDF = (await import('jspdf')).default;
 
       if (summaryRef.current) {
+        // Fix: Tymczasowo napraw elementy z bg-clip-text (html2canvas ich nie renderuje)
+        const gradientTextElements = summaryRef.current.querySelectorAll('.bg-clip-text');
+        const originalStyles: { el: Element; color: string; bg: string; bgClip: string }[] = [];
+
+        gradientTextElements.forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          originalStyles.push({
+            el,
+            color: htmlEl.style.color,
+            bg: htmlEl.style.background,
+            bgClip: htmlEl.style.webkitBackgroundClip || htmlEl.style.backgroundClip,
+          });
+          // Ustaw widoczny kolor zamiast gradientu
+          htmlEl.style.color = '#f97316'; // ember-500
+          htmlEl.style.background = 'none';
+          htmlEl.style.webkitBackgroundClip = 'unset';
+          htmlEl.style.backgroundClip = 'unset';
+        });
+
         const canvas = await html2canvas(summaryRef.current, {
           scale: 1.5, // Zmniejszone z 2 - nadal dobra jakość, mniejszy plik
           backgroundColor: '#ffffff',
           logging: false,
           useCORS: true,
           allowTaint: true,
+        });
+
+        // Przywróć oryginalne style
+        originalStyles.forEach(({ el, color, bg, bgClip }) => {
+          const htmlEl = el as HTMLElement;
+          htmlEl.style.color = color;
+          htmlEl.style.background = bg;
+          htmlEl.style.webkitBackgroundClip = bgClip;
+          htmlEl.style.backgroundClip = bgClip;
         });
 
         // Użyj JPEG z kompresją zamiast PNG (drastycznie mniejszy rozmiar)
