@@ -164,12 +164,15 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <Link href="/" className="text-slate-400 hover:text-white text-sm mb-2 inline-flex items-center gap-1">
+            <button
+              onClick={() => router.back()}
+              className="text-slate-400 hover:text-white text-sm mb-2 inline-flex items-center gap-1 cursor-pointer"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Powrót
-            </Link>
+            </button>
             <h1 className="text-2xl font-bold text-white">Mój Profil</h1>
             <p className="text-slate-400 mt-1">Twoja wizja idealnego życia</p>
           </div>
