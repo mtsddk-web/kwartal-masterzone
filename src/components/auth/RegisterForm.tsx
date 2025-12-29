@@ -74,7 +74,18 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-night-800 border border-night-700 rounded-2xl p-8 shadow-xl">
+      <div className="bg-night-800 border border-night-700 rounded-2xl p-8 shadow-xl relative">
+        {/* Close button */}
+        <Link
+          href="/"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-night-700 rounded-lg transition-colors"
+          title="Zamknij"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </Link>
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
