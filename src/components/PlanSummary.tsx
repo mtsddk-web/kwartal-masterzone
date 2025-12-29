@@ -46,6 +46,9 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
         if (goal.why) {
           lines.push(`*Dlaczego:* ${goal.why}`);
         }
+        if (goal.actions) {
+          lines.push(`*Działania:* ${goal.actions}`);
+        }
         lines.push('');
       }
     });
@@ -381,8 +384,13 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
                     {goal.name}
                   </h4>
                   {goal.why && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                       {goal.why}
+                    </p>
+                  )}
+                  {goal.actions && (
+                    <p className="text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-lg px-2 py-1">
+                      <span className="font-medium">Działania:</span> {goal.actions}
                     </p>
                   )}
                 </div>

@@ -62,6 +62,7 @@ export interface AnnualPlan {
 export interface Goal {
   name: string;
   why: string;
+  actions: string; // Konkretne działania prowadzące do celu
 }
 
 export interface Project {
@@ -212,9 +213,9 @@ export const emptyPlan: QuarterlyPlan = {
 
   // Cele
   goals: [
-    { name: '', why: '' },
-    { name: '', why: '' },
-    { name: '', why: '' },
+    { name: '', why: '', actions: '' },
+    { name: '', why: '', actions: '' },
+    { name: '', why: '', actions: '' },
   ],
   definitionOfDone: ['', '', ''],
   weeklyLeadMeasures: ['', '', ''],
@@ -328,9 +329,9 @@ export const examplePlan: QuarterlyPlan = {
   oneWord: 'ROZPĘD',
 
   goals: [
-    { name: '+25 płacących klientów', why: 'Fundament pod roczny cel 100 klientów' },
-    { name: 'Zatrudnić pierwszą osobę', why: 'Delegacja = skalowalność' },
-    { name: 'System referralowy live', why: 'Organiczny wzrost bez reklam' },
+    { name: '+25 płacących klientów', why: 'Fundament pod roczny cel 100 klientów', actions: '5 demo calls tygodniowo, cold outreach 20 firm, content marketing' },
+    { name: 'Zatrudnić pierwszą osobę', why: 'Delegacja = skalowalność', actions: 'Job posting, 10 rozmów, onboarding plan' },
+    { name: 'System referralowy live', why: 'Organiczny wzrost bez reklam', actions: 'Zaprojektować program, zaimplementować w app, poinformować klientów' },
   ],
   definitionOfDone: [
     '32 aktywne subskrypcje (7+25)',

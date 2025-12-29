@@ -68,7 +68,7 @@ export default function GoalsStep({ goals, onChange }: GoalsStepProps) {
             </div>
 
             {/* Why important */}
-            <div>
+            <div className="mb-4">
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Dlaczego to ważne?
               </label>
@@ -78,6 +78,20 @@ export default function GoalsStep({ goals, onChange }: GoalsStepProps) {
                 onChange={(e) => updateGoal(index, 'why', e.target.value)}
                 placeholder={examplePlan.goals[index]?.why}
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-night-900/50 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500/50 transition-all duration-300 focus:border-ember-500/50 focus:ring-2 focus:ring-ember-500/20"
+              />
+            </div>
+
+            {/* Actions to achieve goal */}
+            <div>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                Jakie konkretne działania doprowadzą do celu?
+              </label>
+              <textarea
+                value={goal.actions || ''}
+                onChange={(e) => updateGoal(index, 'actions', e.target.value)}
+                placeholder={examplePlan.goals[index]?.actions}
+                rows={2}
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-night-900/50 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500/50 transition-all duration-300 focus:border-ember-500/50 focus:ring-2 focus:ring-ember-500/20 resize-none"
               />
             </div>
           </div>
