@@ -144,7 +144,7 @@ export default function ProfilePage() {
 
   if (loading || loadingProfile) {
     return (
-      <div className="min-h-screen bg-night-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
       </div>
     );
@@ -159,27 +159,27 @@ export default function ProfilePage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-night-950 p-4 sm:p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-night-950 p-4 sm:p-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <button
               onClick={() => router.back()}
-              className="text-slate-400 hover:text-white text-sm mb-2 inline-flex items-center gap-1 cursor-pointer"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm mb-2 inline-flex items-center gap-1 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Powrót
             </button>
-            <h1 className="text-2xl font-bold text-white">Mój Profil</h1>
-            <p className="text-slate-400 mt-1">Twoja wizja idealnego życia</p>
+            <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Mój Profil</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">Twoja wizja idealnego życia</p>
           </div>
           {lastUpdated && (
             <div className="text-right text-sm text-slate-500">
               Ostatnia aktualizacja:<br />
-              <span className="text-slate-400">{lastUpdated}</span>
+              <span className="text-slate-600 dark:text-slate-400">{lastUpdated}</span>
             </div>
           )}
         </div>
@@ -204,9 +204,9 @@ export default function ProfilePage() {
         {/* Profile form */}
         <form onSubmit={handleSave} className="space-y-8">
           {/* Basic info */}
-          <div className="bg-night-900 border border-night-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-800 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               O mnie
@@ -214,34 +214,34 @@ export default function ProfilePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Imię</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Imię</label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   placeholder="Jak masz na imię?"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Czym się zajmujesz?</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Czym się zajmujesz?</label>
                 <textarea
                   value={aboutMe}
                   onChange={(e) => setAboutMe(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                   placeholder="Opisz krótko czym się zajmujesz, jaką masz pracę, pasje..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Ważne rzeczy w moim życiu</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Ważne rzeczy w moim życiu</label>
                 <textarea
                   value={importantThings}
                   onChange={(e) => setImportantThings(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                   placeholder="Co jest dla Ciebie najważniejsze? Rodzina, zdrowie, rozwój...?"
                 />
               </div>
@@ -249,53 +249,53 @@ export default function ProfilePage() {
           </div>
 
           {/* Ideal life vision */}
-          <div className="bg-night-900 border border-night-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+          <div className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-800 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
               <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
               Wizja idealnego życia
             </h2>
-            <p className="text-slate-400 text-sm mb-6">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
               Wyobraź sobie swoje idealne życie. Gdzie mieszkasz? Z kim? Co robisz? Jak wygląda Twój dzień?
             </p>
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <span className="text-indigo-400">Za 10 lat</span> - jak wygląda moje życie?
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                  <span className="text-indigo-500 dark:text-indigo-400">Za 10 lat</span> - jak wygląda moje życie?
                 </label>
                 <textarea
                   value={idealLife10y}
                   onChange={(e) => setIdealLife10y(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                   placeholder="Opisz szczegółowo swoje idealne życie za 10 lat..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <span className="text-purple-400">Za 20 lat</span> - jak wygląda moje życie?
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                  <span className="text-purple-500 dark:text-purple-400">Za 20 lat</span> - jak wygląda moje życie?
                 </label>
                 <textarea
                   value={idealLife20y}
                   onChange={(e) => setIdealLife20y(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                   placeholder="Opisz szczegółowo swoje idealne życie za 20 lat..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <span className="text-amber-400">Za 30 lat</span> - jak wygląda moje życie?
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                  <span className="text-amber-500 dark:text-amber-400">Za 30 lat</span> - jak wygląda moje życie?
                 </label>
                 <textarea
                   value={idealLife30y}
                   onChange={(e) => setIdealLife30y(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                   placeholder="Opisz szczegółowo swoje idealne życie za 30 lat..."
                 />
               </div>
@@ -303,14 +303,14 @@ export default function ProfilePage() {
           </div>
 
           {/* Long term goal */}
-          <div className="bg-night-900 border border-night-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-800 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Cel życiowy
             </h2>
-            <p className="text-slate-400 text-sm mb-4">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
               Do czego ogólnie dążysz? Jaki jest Twój największy cel?
             </p>
 
@@ -318,7 +318,7 @@ export default function ProfilePage() {
               value={longTermGoal}
               onChange={(e) => setLongTermGoal(e.target.value)}
               rows={4}
-              className="w-full px-4 py-3 bg-night-800 border border-night-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
               placeholder="Jaki jest Twój największy życiowy cel? Do czego zmierzasz?"
             />
           </div>

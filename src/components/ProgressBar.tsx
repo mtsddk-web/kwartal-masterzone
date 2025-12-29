@@ -11,9 +11,10 @@ interface ProgressBarProps {
   currentStep: number;
   totalSteps: number;
   phases: Phase[];
+  onPhaseClick?: (stepIndex: number) => void;
 }
 
-export default function ProgressBar({ currentStep, totalSteps, phases }: ProgressBarProps) {
+export default function ProgressBar({ currentStep, totalSteps, phases, onPhaseClick }: ProgressBarProps) {
   // Oblicz aktualną fazę
   const currentPhaseIndex = phases.findIndex(phase => phase.steps.includes(currentStep));
   const currentPhase = phases[currentPhaseIndex];
@@ -37,12 +38,19 @@ export default function ProgressBar({ currentStep, totalSteps, phases }: Progres
             const isCurrent = index === currentPhaseIndex;
             const isPending = index > currentPhaseIndex;
 
+            const canNavigate = onPhaseClick && (isCompleted || isCurrent);
+
             return (
               <div key={phase.name} className="flex-1 flex items-center">
                 {/* Faza */}
-                <div className={`flex items-center gap-3 transition-all duration-350 ${
-                  isCompleted ? 'opacity-60' : isCurrent ? 'opacity-100' : 'opacity-40'
-                }`}>
+                <button
+                  type="button"
+                  onClick={() => canNavigate && onPhaseClick(phase.steps[0])}
+                  disabled={!canNavigate}
+                  className={`flex items-center gap-3 transition-all duration-350 ${
+                    isCompleted ? 'opacity-60' : isCurrent ? 'opacity-100' : 'opacity-40'
+                  } ${canNavigate ? 'cursor-pointer hover:opacity-100' : 'cursor-default'}`}
+                >
                   {/* Ikona fazy */}
                   <div className={`
                     w-12 h-12 rounded-2xl flex items-center justify-center text-xl
@@ -53,6 +61,7 @@ export default function ProgressBar({ currentStep, totalSteps, phases }: Progres
                         ? 'bg-ember-500/20 dark:bg-ember-500/30 ring-2 ring-ember-500/50 ring-offset-2 ring-offset-slate-50 dark:ring-offset-night-900'
                         : 'bg-slate-200 dark:bg-night-800'
                     }
+                    ${canNavigate ? 'hover:scale-110' : ''}
                   `}>
                     {isCompleted ? (
                       <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,7 +73,7 @@ export default function ProgressBar({ currentStep, totalSteps, phases }: Progres
                   </div>
 
                   {/* Nazwa i opis */}
-                  <div className="hidden lg:block">
+                  <div className="hidden lg:block text-left">
                     <div className={`font-semibold text-sm transition-colors duration-350 ${
                       isCompleted
                         ? 'text-emerald-600 dark:text-emerald-400'
@@ -82,7 +91,7 @@ export default function ProgressBar({ currentStep, totalSteps, phases }: Progres
                       {phase.description}
                     </div>
                   </div>
-                </div>
+                </button>
 
                 {/* Linia łącząca (nie po ostatniej fazie) */}
                 {index < phases.length - 1 && (
@@ -136,18 +145,27 @@ export default function ProgressBar({ currentStep, totalSteps, phases }: Progres
 
         {/* Mini fazy jako kropki */}
         <div className="flex justify-center gap-2">
-          {phases.map((phase, index) => (
-            <div
-              key={phase.name}
-              className={`w-2 h-2 rounded-full transition-all duration-350 ${
-                index < currentPhaseIndex
-                  ? 'bg-emerald-500'
-                  : index === currentPhaseIndex
-                    ? 'bg-ember-500 ring-2 ring-ember-500/30'
-                    : 'bg-slate-300 dark:bg-night-700'
-              }`}
-            />
-          ))}
+          {phases.map((phase, index) => {
+            const isCompleted = index < currentPhaseIndex;
+            const isCurrent = index === currentPhaseIndex;
+            const canNavigate = onPhaseClick && (isCompleted || isCurrent);
+
+            return (
+              <button
+                key={phase.name}
+                type="button"
+                onClick={() => canNavigate && onPhaseClick(phase.steps[0])}
+                disabled={!canNavigate}
+                className={`w-3 h-3 rounded-full transition-all duration-350 ${
+                  isCompleted
+                    ? 'bg-emerald-500'
+                    : isCurrent
+                      ? 'bg-ember-500 ring-2 ring-ember-500/30'
+                      : 'bg-slate-300 dark:bg-night-700'
+                } ${canNavigate ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

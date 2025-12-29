@@ -177,8 +177,9 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
 
       if (summaryRef.current) {
         // Fix: Tymczasowo napraw elementy z bg-clip-text (html2canvas ich nie renderuje)
+        // Problem: text-transparent używa -webkit-text-fill-color: transparent
         const gradientTextElements = summaryRef.current.querySelectorAll('.bg-clip-text');
-        const originalStyles: { el: Element; color: string; bg: string; bgClip: string }[] = [];
+        const originalStyles: { el: Element; color: string; bg: string; bgClip: string; textFillColor: string }[] = [];
 
         gradientTextElements.forEach((el) => {
           const htmlEl = el as HTMLElement;
@@ -187,12 +188,15 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
             color: htmlEl.style.color,
             bg: htmlEl.style.background,
             bgClip: htmlEl.style.webkitBackgroundClip || htmlEl.style.backgroundClip,
+            textFillColor: (htmlEl.style as unknown as Record<string, string>).webkitTextFillColor || '',
           });
           // Ustaw widoczny kolor zamiast gradientu
           htmlEl.style.color = '#f97316'; // ember-500
           htmlEl.style.background = 'none';
           htmlEl.style.webkitBackgroundClip = 'unset';
           htmlEl.style.backgroundClip = 'unset';
+          // Kluczowe: nadpisz -webkit-text-fill-color (używane przez text-transparent)
+          (htmlEl.style as unknown as Record<string, string>).webkitTextFillColor = '#f97316';
         });
 
         const canvas = await html2canvas(summaryRef.current, {
@@ -204,16 +208,14 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
         });
 
         // Przywróć oryginalne style
-        originalStyles.forEach(({ el, color, bg, bgClip }) => {
+        originalStyles.forEach(({ el, color, bg, bgClip, textFillColor }) => {
           const htmlEl = el as HTMLElement;
           htmlEl.style.color = color;
           htmlEl.style.background = bg;
           htmlEl.style.webkitBackgroundClip = bgClip;
           htmlEl.style.backgroundClip = bgClip;
+          (htmlEl.style as unknown as Record<string, string>).webkitTextFillColor = textFillColor;
         });
-
-        // Użyj JPEG z kompresją zamiast PNG (drastycznie mniejszy rozmiar)
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
         const pdf = new jsPDF({
           orientation: 'portrait',
@@ -221,43 +223,62 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
           format: 'a4',
         });
 
-        const pageWidth = 210;
-        const pageHeight = 297;
+        const pageWidth = 210; // mm
+        const pageHeight = 297; // mm
+        const margin = 5; // mm margines na górze/dole
+        const usablePageHeight = pageHeight - (margin * 2);
         const imgWidth = pageWidth;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Jeśli obraz jest dłuższy niż strona A4, dodaj wielostronicowość
-        if (imgHeight > pageHeight) {
-          let yOffset = 0;
+        // Jeśli obraz jest dłuższy niż strona A4, podziel na strony
+        if (imgHeight > usablePageHeight) {
+          // Oblicz ile pikseli canvas odpowiada jednej stronie A4
+          const pixelsPerMm = canvas.width / pageWidth;
+          const maxPixelsPerPage = usablePageHeight * pixelsPerMm;
+
+          let currentY = 0;
           let pageNum = 0;
 
-          while (yOffset < imgHeight) {
+          while (currentY < canvas.height) {
             if (pageNum > 0) {
               pdf.addPage();
             }
 
-            // Oblicz ile obrazu zmieści się na stronie
-            const sourceY = (yOffset / imgHeight) * canvas.height;
-            const sourceHeight = Math.min(
-              (pageHeight / imgHeight) * canvas.height,
-              canvas.height - sourceY
-            );
+            // Ile pikseli zostało do końca
+            const remainingPixels = canvas.height - currentY;
+            // Nie więcej niż mieści się na stronie
+            const sourceHeight = Math.min(maxPixelsPerPage, remainingPixels);
 
-            pdf.addImage(
-              imgData,
-              'JPEG',
-              0,
-              -yOffset,
-              imgWidth,
-              imgHeight,
-              undefined,
-              'FAST'
-            );
+            // Wytnij fragment canvas dla tej strony
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = sourceHeight;
 
-            yOffset += pageHeight;
+            const ctx = pageCanvas.getContext('2d');
+            if (ctx) {
+              // Białe tło
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
+              // Kopiuj fragment oryginalnego canvas
+              ctx.drawImage(
+                canvas,
+                0, currentY, canvas.width, sourceHeight, // źródło
+                0, 0, pageCanvas.width, sourceHeight     // cel
+              );
+
+              const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.90);
+              const pageImgHeight = (sourceHeight * imgWidth) / canvas.width;
+
+              pdf.addImage(pageImgData, 'JPEG', 0, margin, imgWidth, pageImgHeight, undefined, 'FAST');
+            }
+
+            currentY += sourceHeight;
             pageNum++;
           }
         } else {
+          // Jedna strona - po prostu dodaj obraz
+          const imgData = canvas.toDataURL('image/jpeg', 0.85);
           pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
         }
 

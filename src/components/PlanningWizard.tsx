@@ -29,6 +29,7 @@ import {
   YearContextStep,
 } from './steps';
 import UserMenu from './auth/UserMenu';
+import OnboardingModal from './OnboardingModal';
 
 // Kroki formularza - wewnętrzne nazwy
 const STEPS = [
@@ -78,7 +79,7 @@ export default function PlanningWizard() {
   const [soundEnabled, setSoundEnabled] = useState(false);
 
   const { fireConfetti, fireSparkle } = useConfetti();
-  const { seconds, isRunning, start: startTimer, formatTime } = useTimer();
+  const { seconds, isRunning, start: startTimer, stop: stopTimer, formatTime } = useTimer();
   const { playClick, playSuccess, playWhoosh, playCelebration } = useSoundEffects();
   const { addToast } = useToast();
 
@@ -104,12 +105,16 @@ export default function PlanningWizard() {
     isLoggedIn,
   } = usePlanAutoSave(plan, setPlan);
 
-  // Start timer when planning begins
+  // Start timer when planning begins, stop when summary shows
   useEffect(() => {
     if (!showLanding && !showSummary && !isRunning) {
       startTimer();
     }
-  }, [showLanding, showSummary, isRunning, startTimer]);
+    // Stop timer when plan is completed (summary is shown)
+    if (showSummary && isRunning) {
+      stopTimer();
+    }
+  }, [showLanding, showSummary, isRunning, startTimer, stopTimer]);
 
   const updatePlan = useCallback(<K extends keyof QuarterlyPlan>(
     key: K,
@@ -310,6 +315,9 @@ export default function PlanningWizard() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
+      {/* Onboarding for new users */}
+      <OnboardingModal />
+
       {/* Easter egg overlay */}
       <EasterEggOverlay isActive={easterEggActive} />
 
@@ -456,6 +464,19 @@ export default function PlanningWizard() {
               <span className="text-ember-500 dark:text-ember-400 font-mono">{formatTime(seconds)}</span>
             </div>
 
+            {/* Quick preview/export button */}
+            <button
+              onClick={() => setShowSummary(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-ember-500/10 to-amber-500/10 hover:from-ember-500/20 hover:to-amber-500/20 text-ember-600 dark:text-ember-400 text-sm font-medium rounded-lg border border-ember-500/20 transition-all"
+              title="Podgląd i eksport"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Podgląd
+            </button>
+
             {/* Sound toggle */}
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
@@ -494,6 +515,7 @@ export default function PlanningWizard() {
             currentStep={currentStep}
             totalSteps={STEPS.length}
             phases={PHASES}
+            onPhaseClick={goToStep}
           />
         </div>
       </div>

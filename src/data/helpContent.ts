@@ -77,7 +77,7 @@ export const helpContent: Record<string, HelpSection> = {
     tips: [
       'Jeśli nie czujesz lekkiego strachu, to pewnie za mało odważne',
       'Pomyśl: "co bym zrobił, gdybym nie mógł ponieść porażki?"',
-      'Często największy growth jest po drugiej stronie dyskomfortu',
+      'Często największy wzrost jest po drugiej stronie dyskomfortu',
     ],
     qa: [
       { q: 'Co jeśli odważny ruch jest za ryzykowny?', a: 'Odważny ≠ głupi. Chodzi o działanie poza strefą komfortu, nie o hazard. Jeśli coś może zniszczyć firmę - to nie odwaga.' },
@@ -223,13 +223,13 @@ export const helpContent: Record<string, HelpSection> = {
     ],
     tips: [
       'Wybierz metryki, które możesz kontrolować',
-      'Lead measures > lag measures (działania > wyniki)',
+      'Miary wyprzedzające > miary wynikowe (działania > rezultaty)',
       'Śledź je co tydzień, nie tylko na koniec kwartału',
     ],
     qa: [
       { q: 'Czym różni się metryka od North Star?', a: 'North Star to JEDNA główna metryka. Tu możesz mieć 2-3 wspierające, które pomagają śledzić postęp.' },
-      { q: 'Co to lead vs lag measure?', a: 'Lead = działanie (np. "liczba telefonów dziennie"). Lag = wynik (np. "podpisane umowy"). Lead measures dają kontrolę.' },
-      { q: 'Jak często śledzić metryki?', a: 'Co tydzień minimum. Najlepiej codziennie dla lead measures. Lag measures raz na tydzień.' },
+      { q: 'Co to miara wyprzedzająca vs wynikowa?', a: 'Wyprzedzająca = działanie (np. "liczba telefonów dziennie"). Wynikowa = efekt (np. "podpisane umowy"). Miary wyprzedzające dają kontrolę.' },
+      { q: 'Jak często śledzić metryki?', a: 'Co tydzień minimum. Najlepiej codziennie dla miar wyprzedzających. Miary wynikowe raz na tydzień.' },
       { q: 'Co jeśli nie mam danych?', a: 'Zacznij zbierać. Ustaw prosty sposób mierzenia. Bez danych nie wiesz czy idziesz w dobrą stronę.' },
       { q: 'Jakie metryki śledzić?', a: 'Zależy od celu: sprzedaż (leady, demo, konwersja), produkt (użytkownicy, retencja, NPS), marketing (zasięg, CTR, cost per lead).' },
     ],
