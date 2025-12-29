@@ -79,7 +79,9 @@ export default function UserMenu() {
     );
   }
 
-  const userInitial = user.email?.charAt(0).toUpperCase() || 'U';
+  const firstName = user.user_metadata?.first_name as string | undefined;
+  const userInitial = firstName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U';
+  const displayName = firstName || user.email?.split('@')[0] || 'Użytkownik';
 
   return (
     <div className="relative" ref={menuRef}>
@@ -101,15 +103,25 @@ export default function UserMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-night-800 border border-night-700 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-56 bg-night-800 border border-night-700 rounded-xl shadow-xl z-[9999] overflow-hidden">
           {/* User info */}
           <div className="px-4 py-3 border-b border-night-700">
-            <p className="text-sm font-medium text-white truncate">{user.email}</p>
-            <p className="text-xs text-slate-400">Konto MasterZone</p>
+            <p className="text-sm font-medium text-white truncate">{displayName}</p>
+            <p className="text-xs text-slate-400 truncate">{user.email}</p>
           </div>
 
           {/* Menu items */}
           <div className="py-2">
+            <Link
+              href="/profile"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-night-700 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Mój profil
+            </Link>
             <Link
               href="/history"
               onClick={() => setIsOpen(false)}

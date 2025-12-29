@@ -175,9 +175,25 @@ export const emptyAnnualPlan: AnnualPlan = {
   rules: ['', '', ''],
 };
 
+// Funkcja pomocnicza: oblicz następny kwartał do zaplanowania
+function getNextPlannableQuarter(): { quarter: QuarterlyPlan['quarter']; year: number } {
+  const now = new Date();
+  const currentMonth = now.getMonth(); // 0-11
+  const currentYear = now.getFullYear();
+  const currentQuarter = Math.floor(currentMonth / 3) + 1; // 1-4
+
+  // Następny kwartał
+  if (currentQuarter === 4) {
+    return { quarter: 'Q1', year: currentYear + 1 };
+  }
+  return { quarter: `Q${currentQuarter + 1}` as QuarterlyPlan['quarter'], year: currentYear };
+}
+
+const nextQuarter = getNextPlannableQuarter();
+
 export const emptyPlan: QuarterlyPlan = {
-  quarter: 'Q1',
-  year: new Date().getFullYear(),
+  quarter: nextQuarter.quarter,
+  year: nextQuarter.year,
 
   // Retrospektywa
   retrospective: emptyRetrospective,
@@ -271,7 +287,7 @@ export const examplePlan: QuarterlyPlan = {
       'Zespół 3 osoby',
       '4-dniowy tydzień pracy',
     ],
-    oneWord: 'SCALE',
+    oneWord: 'WZROST',
     goals: [
       {
         name: '100 płacących klientów',
@@ -309,7 +325,7 @@ export const examplePlan: QuarterlyPlan = {
   braveAction: 'Podniosę ceny o 50% dla nowych klientów',
 
   northStar: '25 nowych klientów',
-  oneWord: 'MOMENTUM',
+  oneWord: 'ROZPĘD',
 
   goals: [
     { name: '+25 płacących klientów', why: 'Fundament pod roczny cel 100 klientów' },

@@ -135,20 +135,57 @@ body::before {
   background-clip: text;
 }
 
-/* Form elements */
+/* Form elements - Mobile-first UX */
 input, textarea, select {
   font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 16px; /* Prevents iOS zoom on focus */
 }
 
 input::placeholder,
 textarea::placeholder {
   color: rgba(148, 163, 184, 0.5);
+  transition: opacity 0.2s ease;
+}
+
+/* Hide placeholder on focus for cleaner UX */
+input:focus::placeholder,
+textarea:focus::placeholder {
+  opacity: 0.3;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
+}
+
+/* Enhanced focus states for mobile */
+@media (max-width: 768px) {
+  input, textarea, select {
+    min-height: 48px; /* Larger touch targets */
+    padding: 14px 16px;
+  }
+
+  textarea {
+    min-height: auto;
+  }
+
+  /* Stronger focus ring on mobile */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+    border-color: rgb(251, 191, 36) !important;
+  }
+}
+
+/* Focus-visible for keyboard navigation */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgb(251, 191, 36);
+  outline-offset: 2px;
 }
 
 /* Range slider styling */

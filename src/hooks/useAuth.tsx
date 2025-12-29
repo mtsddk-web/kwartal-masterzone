@@ -10,7 +10,7 @@ interface AuthContextType {
   loading: boolean;
   isConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, firstName?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
 }
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signUp = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, firstName?: string) => {
       if (!configured) {
         return { error: 'Supabase nie jest skonfigurowane' };
       }
@@ -93,6 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            first_name: firstName || '',
+          },
         },
       });
       return { error: error?.message ?? null };

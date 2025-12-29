@@ -117,11 +117,11 @@ export const helpContent: Record<string, HelpSection> = {
     description:
       'Wybierz jedno słowo, które będzie Twoim kompasem na ten kwartał. Gdy staniesz przed trudną decyzją, zapytaj: "czy to wspiera moje słowo?"',
     examples: [
-      'MOMENTUM - budowanie rozpędu i tempa',
-      'FOCUS - bezwzględna koncentracja na priorytecie',
-      'SCALE - skalowanie tego co już działa',
-      'COURAGE - odwaga w trudnych decyzjach',
-      'SYSTEMS - budowanie procesów i automatyzacji',
+      'ROZPĘD - budowanie tempa i momentum',
+      'SKUPIENIE - bezwzględna koncentracja na priorytecie',
+      'WZROST - skalowanie tego co już działa',
+      'ODWAGA - odwaga w trudnych decyzjach',
+      'SYSTEMY - budowanie procesów i automatyzacji',
     ],
     tips: [
       'Wybierz słowo, które rezonuje emocjonalnie',
@@ -132,7 +132,7 @@ export const helpContent: Record<string, HelpSection> = {
       { q: 'Czy mogą być dwa słowa?', a: 'Nie. Jedno. To ćwiczenie na fokus. Dwa słowa = brak priorytetu.' },
       { q: 'Czy może być po polsku?', a: 'Tak! SKUPIENIE, ODWAGA, WZROST - ważne żeby rezonowało z Tobą.' },
       { q: 'Jak używać tego słowa?', a: 'Przed każdą decyzją pytaj: "Czy to wspiera moje słowo?". Np. jeśli słowo to FOCUS, a ktoś prosi o spotkanie - czy to wspiera fokus?' },
-      { q: 'Jakie słowa wybierają inni przedsiębiorcy?', a: 'EXECUTION, GROWTH, LEVERAGE, DEPTH, DISCIPLINE, MOMENTUM, SCALE. Wybierz to, które najlepiej opisuje czego POTRZEBUJESZ w tym kwartale.' },
+      { q: 'Jakie słowa wybierają inni przedsiębiorcy?', a: 'EGZEKUCJA, WZROST, DŹWIGNIA, GŁĘBIA, DYSCYPLINA, ROZPĘD, SKALA. Wybierz to, które najlepiej opisuje czego POTRZEBUJESZ w tym kwartale.' },
     ],
   },
 

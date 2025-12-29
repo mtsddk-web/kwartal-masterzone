@@ -114,7 +114,7 @@ export default function AnnualPlanStep({
               type="text"
               value={annualPlan.oneWord}
               onChange={(e) => updateField('oneWord', e.target.value.toUpperCase())}
-              placeholder="np. SCALE, FOCUS, FREEDOM..."
+              placeholder="np. WZROST, SKUPIENIE, WOLNOŚĆ..."
               className="w-full px-4 py-3 bg-slate-50 dark:bg-night-900/80 border border-slate-300 dark:border-night-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 uppercase font-bold text-center text-xl tracking-widest"
               maxLength={15}
             />

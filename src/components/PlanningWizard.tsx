@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { QuarterlyPlan, emptyPlan, getPreviousQuarter } from '@/types/plan';
 import ProgressBar from './ProgressBar';
 import QuarterSelector from './QuarterSelector';
@@ -29,6 +30,7 @@ import {
 } from './steps';
 import UserMenu from './auth/UserMenu';
 
+// Kroki formularza - wewnętrzne nazwy
 const STEPS = [
   'Kwartał',
   'Retrospektywa',
@@ -42,17 +44,29 @@ const STEPS = [
   'Kontekst',
 ];
 
-// Page transition variants
+// 4 fazy wizualne - ludzkie nazwy (Steve Jobs style)
+const PHASES = [
+  { name: 'Przeszłość', icon: '↩', steps: [0, 1], description: 'Refleksja i wnioski' },
+  { name: 'Kierunek', icon: '🎯', steps: [2, 3, 4], description: 'Wizja i cele' },
+  { name: 'Droga', icon: '🛤', steps: [5, 6, 7], description: 'Plan działania' },
+  { name: 'Ochrona', icon: '🛡', steps: [8, 9], description: 'Zabezpieczenia' },
+];
+
+// Znajdź aktualną fazę na podstawie kroku
+const getPhaseForStep = (step: number) => {
+  return PHASES.findIndex(phase => phase.steps.includes(step));
+};
+
+// Page transition variants - Jobs style: slower, elegant ease-out
 const pageVariants = {
-  initial: { opacity: 0, x: 50, scale: 0.98 },
+  initial: { opacity: 0, x: 30, scale: 0.98 },
   animate: { opacity: 1, x: 0, scale: 1 },
-  exit: { opacity: 0, x: -50, scale: 0.98 },
+  exit: { opacity: 0, x: -30, scale: 0.98 },
 };
 
 const pageTransition = {
-  type: 'spring',
-  stiffness: 300,
-  damping: 30,
+  duration: 0.35,
+  ease: [0.4, 0, 0.2, 1], // ease-out
 };
 
 export default function PlanningWizard() {
@@ -399,19 +413,22 @@ export default function PlanningWizard() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center"
-              whileHover={{ scale: 1.05, rotate: 5 }}
+              className="relative w-10 h-10 rounded-xl overflow-hidden"
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
+              <Image
+                src="/images/logo-masterzone.png"
+                alt="MasterZone"
+                fill
+                className="object-contain"
+              />
             </motion.div>
             <div>
               <h1 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
                 Plan Kwartału
               </h1>
-              <p className="text-sm text-slate-500">MasterZone</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">MasterZone</p>
             </div>
           </div>
 
@@ -470,7 +487,7 @@ export default function PlanningWizard() {
           <ProgressBar
             currentStep={currentStep}
             totalSteps={STEPS.length}
-            steps={STEPS}
+            phases={PHASES}
           />
         </div>
       </div>

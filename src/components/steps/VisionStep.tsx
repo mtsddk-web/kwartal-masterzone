@@ -130,7 +130,7 @@ export default function VisionStep({
             type="text"
             value={oneWord}
             onChange={(e) => onChange('oneWord', e.target.value.toUpperCase())}
-            placeholder="np. MOMENTUM, FOCUS, SCALE..."
+            placeholder="np. ROZPĘD, SKUPIENIE, WZROST..."
             maxLength={15}
             className="w-full px-4 py-3 bg-slate-50 dark:bg-night-900/80 border border-purple-300 dark:border-purple-500/40 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 uppercase font-bold text-center text-xl tracking-widest"
           />
