@@ -128,9 +128,15 @@ export default function PlanningWizard() {
     if (soundEnabled) playClick();
 
     if (currentStep < STEPS.length - 1) {
-      // Mini sparkle celebration
-      fireSparkle();
-      if (soundEnabled) playSuccess();
+      const currentPhase = getPhaseForStep(currentStep);
+      const nextPhase = getPhaseForStep(currentStep + 1);
+
+      // Sparkle celebration only when completing a phase (changing phases)
+      if (currentPhase !== nextPhase) {
+        fireSparkle();
+        if (soundEnabled) playSuccess();
+      }
+
       setCurrentStep((prev) => prev + 1);
     } else {
       // Big celebration on completion!
