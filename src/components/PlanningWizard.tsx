@@ -409,7 +409,7 @@ export default function PlanningWizard() {
       {/* Background - simplified for performance */}
 
       {/* Header */}
-      <header className="py-6 px-4 border-b border-slate-200 dark:border-night-800/50 relative z-10 bg-white/80 dark:bg-transparent backdrop-blur-sm">
+      <header className="py-6 px-4 border-b border-slate-200 dark:border-night-800/50 relative z-50 bg-white/80 dark:bg-transparent backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
