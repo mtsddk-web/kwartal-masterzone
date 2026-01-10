@@ -78,32 +78,27 @@ export default function ProfilePage() {
     if (deleteConfirmation !== 'USUŃ KONTO') return;
 
     setIsDeleting(true);
-    const supabase = createClient();
 
-    if (!supabase || !user) {
-      setMessage({ type: 'error', text: 'Brak połączenia z serwerem' });
+    try {
+      const response = await fetch('/api/delete-account', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Nie udało się usunąć konta');
+      }
+
+      router.push('/login?deleted=true');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Nie udało się usunąć konta'
+      });
       setIsDeleting(false);
-      return;
+      setShowDeleteModal(false);
     }
-
-    // Delete user data from database
-    const { error: dataError } = await supabase
-      .from('quarterly_plans')
-      .delete()
-      .eq('user_id', user.id);
-
-    if (dataError) {
-      console.error('Error deleting user data:', dataError);
-    }
-
-    // Delete user account - this requires admin/service role in production
-    // For now, we'll sign out the user and show instructions
-    await supabase.auth.signOut();
-
-    // In production, you'd call an API endpoint that uses service role to delete the user
-    // await fetch('/api/delete-account', { method: 'DELETE' });
-
-    router.push('/login?deleted=true');
   };
 
   const handleExportData = async () => {

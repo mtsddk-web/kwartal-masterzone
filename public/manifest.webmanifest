@@ -1,0 +1,77 @@
+{
+  "name": "Plan Kwartału - MasterZone",
+  "short_name": "Kwartal",
+  "description": "Zaplanuj swój kwartał strategicznie z MasterZone",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080716",
+  "theme_color": "#f59e0b",
+  "categories": ["productivity", "business"],
+  "lang": "pl",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-48.webp",
+      "type": "image/webp",
+      "sizes": "48x48",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-72.webp",
+      "type": "image/webp",
+      "sizes": "72x72",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.webp",
+      "type": "image/webp",
+      "sizes": "96x96",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.webp",
+      "type": "image/webp",
+      "sizes": "128x128",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.webp",
+      "type": "image/webp",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-256.webp",
+      "type": "image/webp",
+      "sizes": "256x256",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.webp",
+      "type": "image/webp",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nowy Plan",
+      "short_name": "Nowy",
+      "description": "Utwórz nowy plan kwartału",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-96.webp", "sizes": "96x96" }]
+    },
+    {
+      "name": "Profil",
+      "short_name": "Profil",
+      "description": "Zarządzaj swoim kontem",
+      "url": "/profile",
+      "icons": [{ "src": "/icons/icon-96.webp", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
