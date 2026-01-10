@@ -1,352 +1,409 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-
-interface UserProfile {
-  id: string;
-  user_id: string;
-  first_name: string;
-  about_me: string;
-  ideal_life_10y: string;
-  ideal_life_20y: string;
-  ideal_life_30y: string;
-  long_term_goal: string;
-  important_things: string;
-  created_at: string;
-  updated_at: string;
-}
+import { motion, AnimatePresence } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth();
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fullName, setFullName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Form state
-  const [firstName, setFirstName] = useState('');
-  const [aboutMe, setAboutMe] = useState('');
-  const [idealLife10y, setIdealLife10y] = useState('');
-  const [idealLife20y, setIdealLife20y] = useState('');
-  const [idealLife30y, setIdealLife30y] = useState('');
-  const [longTermGoal, setLongTermGoal] = useState('');
-  const [importantThings, setImportantThings] = useState('');
-
-  // Redirect if not logged in
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  // Fetch profile
-  useEffect(() => {
-    if (loading || !user) return;
-
-    const fetchProfile = async () => {
-      if (!isSupabaseConfigured()) {
-        setLoadingProfile(false);
-        return;
-      }
-
-      try {
-        const supabase = createClient();
-        if (!supabase) {
-          setLoadingProfile(false);
-          return;
-        }
-
-        const { data, error: fetchError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          console.error('Fetch profile error:', fetchError);
-        }
-
-        if (data) {
-          setProfile(data as UserProfile);
-          setFirstName(data.first_name || user.user_metadata?.first_name || '');
-          setAboutMe(data.about_me || '');
-          setIdealLife10y(data.ideal_life_10y || '');
-          setIdealLife20y(data.ideal_life_20y || '');
-          setIdealLife30y(data.ideal_life_30y || '');
-          setLongTermGoal(data.long_term_goal || '');
-          setImportantThings(data.important_things || '');
-        } else {
-          // Use user metadata if no profile exists
-          setFirstName(user.user_metadata?.first_name || '');
-        }
-      } catch (err) {
-        console.error('Fetch profile exception:', err);
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
-
-    fetchProfile();
-  }, [user, loading]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    setSaving(true);
-    setError(null);
-    setSuccess(false);
-
-    try {
+    const loadUser = async () => {
       const supabase = createClient();
       if (!supabase) {
-        setError('Nie można połączyć z bazą danych');
-        setSaving(false);
+        router.push('/login');
         return;
       }
 
-      const profileData = {
-        user_id: user.id,
-        first_name: firstName,
-        about_me: aboutMe,
-        ideal_life_10y: idealLife10y,
-        ideal_life_20y: idealLife20y,
-        ideal_life_30y: idealLife30y,
-        long_term_goal: longTermGoal,
-        important_things: importantThings,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error: upsertError } = await supabase
-        .from('user_profiles')
-        .upsert(profileData, { onConflict: 'user_id' });
-
-      if (upsertError) {
-        console.error('Save profile error:', upsertError);
-        setError('Nie udało się zapisać profilu');
-      } else {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
       }
-    } catch (err) {
-      console.error('Save profile exception:', err);
-      setError('Wystąpił błąd podczas zapisywania');
-    } finally {
-      setSaving(false);
+
+      setUser(user);
+      setFullName(user.user_metadata?.full_name || '');
+      setIsLoading(false);
+    };
+
+    loadUser();
+  }, [router]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setMessage(null);
+
+    const supabase = createClient();
+    if (!supabase) {
+      setMessage({ type: 'error', text: 'Brak połączenia z serwerem' });
+      setIsSaving(false);
+      return;
     }
+
+    const { error } = await supabase.auth.updateUser({
+      data: { full_name: fullName },
+    });
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message });
+    } else {
+      setMessage({ type: 'success', text: 'Profil został zaktualizowany' });
+    }
+
+    setIsSaving(false);
   };
 
-  if (loading || loadingProfile) {
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    router.push('/login');
+    router.refresh();
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'USUŃ KONTO') return;
+
+    setIsDeleting(true);
+    const supabase = createClient();
+
+    if (!supabase || !user) {
+      setMessage({ type: 'error', text: 'Brak połączenia z serwerem' });
+      setIsDeleting(false);
+      return;
+    }
+
+    // Delete user data from database
+    const { error: dataError } = await supabase
+      .from('quarterly_plans')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (dataError) {
+      console.error('Error deleting user data:', dataError);
+    }
+
+    // Delete user account - this requires admin/service role in production
+    // For now, we'll sign out the user and show instructions
+    await supabase.auth.signOut();
+
+    // In production, you'd call an API endpoint that uses service role to delete the user
+    // await fetch('/api/delete-account', { method: 'DELETE' });
+
+    router.push('/login?deleted=true');
+  };
+
+  const handleExportData = async () => {
+    const supabase = createClient();
+    if (!supabase || !user) return;
+
+    const { data: plans } = await supabase
+      .from('quarterly_plans')
+      .select('*')
+      .eq('user_id', user.id);
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      user: {
+        email: user.email,
+        fullName: user.user_metadata?.full_name,
+        createdAt: user.created_at,
+      },
+      plans: plans || [],
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kwartal-app-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-ember-500 border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
-  const lastUpdated = profile?.updated_at
-    ? new Date(profile.updated_at).toLocaleDateString('pl-PL', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : null;
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-night-950 p-4 sm:p-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen py-12 px-4">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm mb-2 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Powrót
-            </button>
-            <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Mój Profil</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">Twoja wizja idealnego życia</p>
-          </div>
-          {lastUpdated && (
-            <div className="text-right text-sm text-slate-500">
-              Ostatnia aktualizacja:<br />
-              <span className="text-slate-600 dark:text-slate-400">{lastUpdated}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Success message */}
-        {success && (
-          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-3">
-            <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <p className="text-emerald-400 text-sm">Profil został zapisany!</p>
-          </div>
-        )}
+            Wróć do planowania
+          </Link>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white border border-night-700 hover:border-night-600 rounded-xl transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Wyloguj się
+          </button>
+        </motion.div>
 
-        {/* Profile form */}
-        <form onSubmit={handleSave} className="space-y-8">
-          {/* Basic info */}
-          <div className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-800 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              O mnie
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Imię</label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
-                  placeholder="Jak masz na imię?"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Czym się zajmujesz?</label>
-                <textarea
-                  value={aboutMe}
-                  onChange={(e) => setAboutMe(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  placeholder="Opisz krótko czym się zajmujesz, jaką masz pracę, pasje..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Ważne rzeczy w moim życiu</label>
-                <textarea
-                  value={importantThings}
-                  onChange={(e) => setImportantThings(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  placeholder="Co jest dla Ciebie najważniejsze? Rodzina, zdrowie, rozwój...?"
-                />
-              </div>
+        {/* Profile card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass rounded-3xl p-8 mb-6"
+        >
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center text-white text-2xl font-bold">
+              {fullName ? fullName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-bold text-white">
+                {fullName || 'Twój profil'}
+              </h1>
+              <p className="text-slate-400">{user?.email}</p>
             </div>
           </div>
 
-          {/* Ideal life vision */}
-          <div className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-800 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-              <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-              Wizja idealnego życia
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-              Wyobraź sobie swoje idealne życie. Gdzie mieszkasz? Z kim? Co robisz? Jak wygląda Twój dzień?
-            </p>
+          {/* Message */}
+          <AnimatePresence>
+            {message && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={`mb-6 p-4 rounded-xl ${
+                  message.type === 'success'
+                    ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                }`}
+              >
+                {message.text}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-                  <span className="text-indigo-500 dark:text-indigo-400">Za 10 lat</span> - jak wygląda moje życie?
-                </label>
-                <textarea
-                  value={idealLife10y}
-                  onChange={(e) => setIdealLife10y(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  placeholder="Opisz szczegółowo swoje idealne życie za 10 lat..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-                  <span className="text-purple-500 dark:text-purple-400">Za 20 lat</span> - jak wygląda moje życie?
-                </label>
-                <textarea
-                  value={idealLife20y}
-                  onChange={(e) => setIdealLife20y(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  placeholder="Opisz szczegółowo swoje idealne życie za 20 lat..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-                  <span className="text-amber-500 dark:text-amber-400">Za 30 lat</span> - jak wygląda moje życie?
-                </label>
-                <textarea
-                  value={idealLife30y}
-                  onChange={(e) => setIdealLife30y(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  placeholder="Opisz szczegółowo swoje idealne życie za 30 lat..."
-                />
-              </div>
+          {/* Edit profile form */}
+          <form onSubmit={handleUpdateProfile} className="space-y-6">
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-medium text-slate-300 mb-2">
+                Imię i nazwisko
+              </label>
+              <input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-4 py-3 bg-night-900/50 border border-night-700/50 rounded-xl text-white placeholder-slate-500 focus:border-ember-500 focus:ring-1 focus:ring-ember-500 transition-colors"
+                placeholder="Jan Kowalski"
+              />
             </div>
-          </div>
 
-          {/* Long term goal */}
-          <div className="bg-white dark:bg-night-900 border border-slate-200 dark:border-night-800 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-              <svg className="w-5 h-5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Cel życiowy
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-              Do czego ogólnie dążysz? Jaki jest Twój największy cel?
-            </p>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={user?.email || ''}
+                disabled
+                className="w-full px-4 py-3 bg-night-900/30 border border-night-700/30 rounded-xl text-slate-500 cursor-not-allowed"
+              />
+              <p className="mt-1 text-xs text-slate-500">Email nie może być zmieniony</p>
+            </div>
 
-            <textarea
-              value={longTermGoal}
-              onChange={(e) => setLongTermGoal(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-night-800 border border-slate-300 dark:border-night-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-              placeholder="Jaki jest Twój największy życiowy cel? Do czego zmierzasz?"
-            />
-          </div>
-
-          {/* Save button */}
-          <div className="flex justify-end">
             <button
               type="submit"
-              disabled={saving}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              disabled={isSaving}
+              className="w-full py-3 px-4 bg-gradient-to-r from-ember-500 to-ember-600 text-white font-semibold rounded-xl hover:from-ember-600 hover:to-ember-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-ember-500/25"
             >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Zapisywanie...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Zapisz profil
-                </>
-              )}
+              {isSaving ? 'Zapisywanie...' : 'Zapisz zmiany'}
             </button>
+          </form>
+        </motion.div>
+
+        {/* Data management */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass rounded-3xl p-8 mb-6"
+        >
+          <h2 className="text-xl font-bold text-white mb-6">Zarządzanie danymi</h2>
+
+          <div className="space-y-4">
+            <button
+              onClick={handleExportData}
+              className="w-full flex items-center justify-between px-4 py-4 bg-night-900/30 border border-night-700/30 rounded-xl text-left hover:border-night-600 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-white">Eksportuj dane</p>
+                  <p className="text-sm text-slate-500">Pobierz wszystkie swoje dane w formacie JSON</p>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            <Link
+              href="/trash"
+              className="w-full flex items-center justify-between px-4 py-4 bg-night-900/30 border border-night-700/30 rounded-xl text-left hover:border-night-600 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-white">Kosz</p>
+                  <p className="text-sm text-slate-500">Przywróć usunięte plany</p>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
-        </form>
+        </motion.div>
+
+        {/* Danger zone */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass rounded-3xl p-8 border border-red-500/20"
+        >
+          <h2 className="text-xl font-bold text-red-400 mb-2">Strefa niebezpieczna</h2>
+          <p className="text-slate-400 text-sm mb-6">
+            Te akcje są nieodwracalne. Przemyśl to dokładnie.
+          </p>
+
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full flex items-center justify-between px-4 py-4 bg-red-500/10 border border-red-500/20 rounded-xl text-left hover:bg-red-500/20 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-red-400">Usuń konto</p>
+                <p className="text-sm text-slate-500">Trwale usuń konto i wszystkie dane</p>
+              </div>
+            </div>
+            <svg className="w-5 h-5 text-red-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </motion.div>
+
+        {/* Footer */}
+        <p className="mt-8 text-center text-xs text-slate-600">
+          Konto utworzone: {user?.created_at ? new Date(user.created_at).toLocaleDateString('pl-PL') : '-'}
+        </p>
       </div>
+
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md glass rounded-3xl p-8"
+            >
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+
+              <h2 className="text-2xl font-bold text-white text-center mb-2">
+                Usuń konto?
+              </h2>
+              <p className="text-slate-400 text-center mb-6">
+                Ta akcja jest <span className="text-red-400 font-semibold">nieodwracalna</span>.
+                Wszystkie Twoje plany i dane zostaną trwale usunięte.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Wpisz <span className="font-mono text-red-400">USUŃ KONTO</span> aby potwierdzić
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  className="w-full px-4 py-3 bg-night-900/50 border border-red-500/30 rounded-xl text-white placeholder-slate-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+                  placeholder="USUŃ KONTO"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmation('');
+                  }}
+                  className="flex-1 py-3 px-4 border border-night-700 text-white font-medium rounded-xl hover:bg-night-800 transition-colors"
+                >
+                  Anuluj
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmation !== 'USUŃ KONTO' || isDeleting}
+                  className="flex-1 py-3 px-4 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? 'Usuwanie...' : 'Usuń konto'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -2,178 +2,111 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
-import { useAuth } from './useAuth';
-import type { QuarterlyPlan } from '@/types/plan';
 
-const STORAGE_KEY = 'masterzone-quarterly-plan';
+// =============================================================================
+// TYPES
+// =============================================================================
 
-interface AutoSaveOptions {
-  data: QuarterlyPlan;
+interface AutoSaveOptions<T> {
+  key: string;
+  data: T;
   delay?: number;
-  onSave?: () => void;
-  onRestore?: (data: QuarterlyPlan) => void;
+  onSave?: (data: T) => void;
+  onRestore?: (data: T) => void;
 }
 
-export function usePlanAutoSave(
-  plan: QuarterlyPlan,
-  onChange: (plan: QuarterlyPlan) => void
-) {
-  const { user, loading: authLoading } = useAuth();
+export type CloudStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
+export type LocalStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+interface SyncState {
+  localStatus: LocalStatus;
+  cloudStatus: CloudStatus;
+  lastSyncedAt: Date | null;
+  lastLocalSaveAt: Date | null;
+  retryCount: number;
+  errorMessage: string | null;
+}
+
+// Retry delays in ms (exponential backoff)
+const RETRY_DELAYS = [1000, 2000, 4000, 8000, 16000];
+const MAX_RETRIES = RETRY_DELAYS.length;
+
+// =============================================================================
+// BASIC AUTO-SAVE HOOK (localStorage only)
+// =============================================================================
+
+export function useAutoSave<T>({
+  key,
+  data,
+  delay = 1000,
+  onSave,
+  onRestore,
+}: AutoSaveOptions<T>) {
+  const timeoutRef = useRef<NodeJS.Timeout>();
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasRestoredData, setHasRestoredData] = useState(false);
-  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
-  const [showMigrationPrompt, setShowMigrationPrompt] = useState(false);
-  const [savedTimestamp, setSavedTimestamp] = useState<Date | null>(null);
-
-  const timeoutRef = useRef<NodeJS.Timeout>();
   const previousDataRef = useRef<string>();
 
-  // Save to localStorage (for non-logged users)
-  const saveToLocalStorage = useCallback((data: QuarterlyPlan) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        data,
-        timestamp: new Date().toISOString(),
-        version: 1,
-      }));
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  // Save to Supabase (for logged users)
-  const saveToSupabase = useCallback(async (data: QuarterlyPlan) => {
-    if (!user || !isSupabaseConfigured()) return false;
-
-    try {
-      const supabase = createClient();
-      if (!supabase) return false;
-
-      const { error } = await supabase
-        .from('quarterly_plans')
-        .upsert({
-          user_id: user.id,
-          quarter: data.quarter,
-          year: data.year,
-          plan_data: data,
-        }, {
-          onConflict: 'user_id,quarter,year'
+  const saveData = useCallback(
+    (dataToSave: T) => {
+      try {
+        const serialized = JSON.stringify({
+          data: dataToSave,
+          timestamp: new Date().toISOString(),
+          version: 1,
         });
 
-      return !error;
-    } catch {
-      return false;
-    }
-  }, [user]);
+        if (serialized === previousDataRef.current) return;
 
-  // Main save function
-  const saveData = useCallback(async (dataToSave: QuarterlyPlan) => {
-    const serialized = JSON.stringify(dataToSave);
+        previousDataRef.current = serialized;
+        localStorage.setItem(key, serialized);
+        setLastSaved(new Date());
+        setIsSaving(false);
+        onSave?.(dataToSave);
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        setIsSaving(false);
+      }
+    },
+    [key, onSave]
+  );
 
-    // Skip if data unchanged
-    if (serialized === previousDataRef.current) {
-      setIsSaving(false);
-      return;
-    }
-
-    previousDataRef.current = serialized;
-
-    let success: boolean;
-    if (user) {
-      success = await saveToSupabase(dataToSave);
-    } else {
-      success = saveToLocalStorage(dataToSave);
-    }
-
-    if (success) {
-      setLastSaved(new Date());
-    }
-    setIsSaving(false);
-  }, [user, saveToSupabase, saveToLocalStorage]);
-
-  // Restore from localStorage
-  const restoreFromLocalStorage = useCallback((): QuarterlyPlan | null => {
+  const restoreData = useCallback((): T | null => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(key);
       if (!stored) return null;
 
       const parsed = JSON.parse(stored);
-      setSavedTimestamp(new Date(parsed.timestamp));
+      onRestore?.(parsed.data);
       return parsed.data;
-    } catch {
+    } catch (error) {
+      console.error('Failed to restore data:', error);
       return null;
     }
-  }, []);
+  }, [key, onRestore]);
 
-  // Restore from Supabase
-  const restoreFromSupabase = useCallback(async (quarter: string, year: number): Promise<QuarterlyPlan | null> => {
-    if (!user || !isSupabaseConfigured()) return null;
+  const clearSavedData = useCallback(() => {
+    localStorage.removeItem(key);
+    setLastSaved(null);
+    previousDataRef.current = undefined;
+  }, [key]);
 
+  const hasSavedData = useCallback((): boolean => {
+    return localStorage.getItem(key) !== null;
+  }, [key]);
+
+  const getSavedTimestamp = useCallback((): Date | null => {
     try {
-      const supabase = createClient();
-      if (!supabase) return null;
+      const stored = localStorage.getItem(key);
+      if (!stored) return null;
 
-      const { data, error } = await supabase
-        .from('quarterly_plans')
-        .select('plan_data, updated_at')
-        .eq('user_id', user.id)
-        .eq('quarter', quarter)
-        .eq('year', year)
-        .single();
-
-      if (error || !data) return null;
-
-      setSavedTimestamp(new Date(data.updated_at));
-      return data.plan_data as QuarterlyPlan;
+      const parsed = JSON.parse(stored);
+      return new Date(parsed.timestamp);
     } catch {
       return null;
     }
-  }, [user]);
+  }, [key]);
 
-  // Check for data and show appropriate prompts on mount
-  useEffect(() => {
-    if (authLoading || hasRestoredData) return;
-
-    const checkForData = async () => {
-      if (user) {
-        // Logged in - check Supabase first
-        const supabaseData = await restoreFromSupabase(plan.quarter, plan.year);
-        const localData = restoreFromLocalStorage();
-
-        if (supabaseData) {
-          // Has cloud data - restore it
-          onChange(supabaseData);
-          setHasRestoredData(true);
-
-          // If also has local data, offer to migrate
-          if (localData) {
-            setShowMigrationPrompt(true);
-          }
-        } else if (localData) {
-          // Only local data - offer migration
-          setShowMigrationPrompt(true);
-          setShowRestorePrompt(true);
-        } else {
-          setHasRestoredData(true);
-        }
-      } else {
-        // Not logged in - check localStorage
-        const localData = restoreFromLocalStorage();
-        if (localData) {
-          setShowRestorePrompt(true);
-        } else {
-          setHasRestoredData(true);
-        }
-      }
-    };
-
-    checkForData();
-  }, [user, authLoading, hasRestoredData, plan.quarter, plan.year, restoreFromSupabase, restoreFromLocalStorage, onChange]);
-
-  // Auto-save with debounce
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -182,55 +115,266 @@ export function usePlanAutoSave(
     setIsSaving(true);
 
     timeoutRef.current = setTimeout(() => {
-      saveData(plan);
-    }, 2000);
+      saveData(data);
+    }, delay);
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [plan, saveData]);
+  }, [data, delay, saveData]);
 
-  // Handle restore from prompt
+  return {
+    lastSaved,
+    isSaving,
+    restoreData,
+    clearSavedData,
+    hasSavedData,
+    getSavedTimestamp,
+    forceSave: () => saveData(data),
+  };
+}
+
+// =============================================================================
+// PLAN AUTO-SAVE WITH SUPABASE SYNC
+// =============================================================================
+
+interface PlanAutoSaveOptions {
+  planId?: string;
+  quarter: string;
+  year: number;
+  userId?: string;
+}
+
+export function usePlanAutoSave<T extends object>(
+  plan: T,
+  onChange: (plan: T) => void,
+  options?: PlanAutoSaveOptions
+) {
+  const [hasRestoredData, setHasRestoredData] = useState(false);
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+
+  // Sync state
+  const [syncState, setSyncState] = useState<SyncState>({
+    localStatus: 'idle',
+    cloudStatus: isSupabaseConfigured() ? 'idle' : 'offline',
+    lastSyncedAt: null,
+    lastLocalSaveAt: null,
+    retryCount: 0,
+    errorMessage: null,
+  });
+
+  const syncTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const previousPlanRef = useRef<string>();
+  const isMountedRef = useRef(true);
+
+  // Check online status
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Update cloud status based on online state
+  useEffect(() => {
+    if (!isOnline && syncState.cloudStatus !== 'offline') {
+      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
+    }
+  }, [isOnline, syncState.cloudStatus]);
+
+  // Basic localStorage save
+  const {
+    lastSaved,
+    isSaving,
+    restoreData,
+    clearSavedData,
+    hasSavedData,
+    getSavedTimestamp,
+    forceSave: forceLocalSave,
+  } = useAutoSave({
+    key: 'masterzone-quarterly-plan',
+    data: plan,
+    delay: 2000,
+    onSave: () => {
+      setSyncState(prev => ({
+        ...prev,
+        localStatus: 'saved',
+        lastLocalSaveAt: new Date()
+      }));
+    },
+  });
+
+  // Sync to Supabase
+  const syncToCloud = useCallback(async (dataToSync: T, retry = false) => {
+    if (!isSupabaseConfigured() || !isOnline) {
+      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase) {
+      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
+      return;
+    }
+
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      // Not logged in - stay in offline mode (localStorage only)
+      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
+      return;
+    }
+
+    setSyncState(prev => ({ ...prev, cloudStatus: 'syncing' }));
+
+    try {
+      const quarter = options?.quarter || (dataToSync as { quarter?: string }).quarter || 'Q1';
+      const year = options?.year || (dataToSync as { year?: number }).year || new Date().getFullYear();
+
+      // Check if plan exists
+      const { data: existingPlan, error: fetchError } = await supabase
+        .from('quarterly_plans')
+        .select('id, version')
+        .eq('user_id', user.id)
+        .eq('quarter', quarter)
+        .eq('year', year)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (existingPlan) {
+        // Update existing plan
+        const { error: updateError } = await supabase
+          .from('quarterly_plans')
+          .update({
+            plan_data: dataToSync,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingPlan.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new plan
+        const { error: insertError } = await supabase
+          .from('quarterly_plans')
+          .insert({
+            user_id: user.id,
+            quarter,
+            year,
+            plan_data: dataToSync,
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      if (isMountedRef.current) {
+        setSyncState(prev => ({
+          ...prev,
+          cloudStatus: 'synced',
+          lastSyncedAt: new Date(),
+          retryCount: 0,
+          errorMessage: null,
+        }));
+      }
+    } catch (error) {
+      console.error('Cloud sync failed:', error);
+
+      if (isMountedRef.current) {
+        const currentRetry = retry ? syncState.retryCount : 0;
+
+        if (currentRetry < MAX_RETRIES) {
+          // Schedule retry
+          const retryDelay = RETRY_DELAYS[currentRetry];
+          setSyncState(prev => ({
+            ...prev,
+            cloudStatus: 'error',
+            retryCount: currentRetry + 1,
+            errorMessage: `Sync failed. Retrying in ${retryDelay / 1000}s...`,
+          }));
+
+          retryTimeoutRef.current = setTimeout(() => {
+            syncToCloud(dataToSync, true);
+          }, retryDelay);
+        } else {
+          setSyncState(prev => ({
+            ...prev,
+            cloudStatus: 'error',
+            errorMessage: 'Sync failed after multiple attempts. Data saved locally.',
+          }));
+        }
+      }
+    }
+  }, [isOnline, options?.quarter, options?.year, syncState.retryCount]);
+
+  // Trigger cloud sync after local save (debounced)
+  useEffect(() => {
+    if (syncState.localStatus !== 'saved') return;
+
+    const serialized = JSON.stringify(plan);
+    if (serialized === previousPlanRef.current) return;
+    previousPlanRef.current = serialized;
+
+    // Debounce cloud sync
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = setTimeout(() => {
+      syncToCloud(plan);
+    }, 3000); // Wait 3s after local save before cloud sync
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, [plan, syncState.localStatus, syncToCloud]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+    };
+  }, []);
+
+  // Check for saved data on mount
+  useEffect(() => {
+    if (!hasRestoredData && hasSavedData()) {
+      setShowRestorePrompt(true);
+    }
+  }, [hasRestoredData, hasSavedData]);
+
   const handleRestore = useCallback(() => {
-    const restored = restoreFromLocalStorage();
+    const restored = restoreData();
     if (restored) {
       onChange(restored);
       setHasRestoredData(true);
     }
     setShowRestorePrompt(false);
-  }, [restoreFromLocalStorage, onChange]);
+  }, [restoreData, onChange]);
 
-  // Handle dismiss restore
   const handleDismissRestore = useCallback(() => {
     setShowRestorePrompt(false);
     setHasRestoredData(true);
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
+    clearSavedData();
+  }, [clearSavedData]);
 
-  // Handle migration from localStorage to Supabase
-  const handleMigrate = useCallback(async () => {
-    const localData = restoreFromLocalStorage();
-    if (localData && user) {
-      onChange(localData);
-      await saveToSupabase(localData);
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    setShowMigrationPrompt(false);
-    setShowRestorePrompt(false);
-    setHasRestoredData(true);
-  }, [restoreFromLocalStorage, user, saveToSupabase, onChange]);
-
-  // Handle dismiss migration (keep cloud data)
-  const handleDismissMigration = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setShowMigrationPrompt(false);
-    setShowRestorePrompt(false);
-    setHasRestoredData(true);
-  }, []);
-
-  // Format last saved time
   const formatLastSaved = useCallback(() => {
     if (!lastSaved) return null;
 
@@ -249,63 +393,134 @@ export function usePlanAutoSave(
     });
   }, [lastSaved]);
 
-  // Clear saved data
-  const clearSavedData = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setLastSaved(null);
-    previousDataRef.current = undefined;
-  }, []);
+  // Manual retry
+  const retrySync = useCallback(() => {
+    setSyncState(prev => ({ ...prev, retryCount: 0, errorMessage: null }));
+    syncToCloud(plan);
+  }, [plan, syncToCloud]);
 
-  // Force save
-  const forceSave = useCallback(() => {
-    saveData(plan);
-  }, [plan, saveData]);
+  // Force sync now
+  const forceSyncNow = useCallback(() => {
+    forceLocalSave();
+    syncToCloud(plan);
+  }, [forceLocalSave, plan, syncToCloud]);
 
   return {
+    // Local save status
     lastSaved,
     isSaving,
     showRestorePrompt,
-    showMigrationPrompt,
-    savedTimestamp,
+    savedTimestamp: getSavedTimestamp(),
+
+    // Cloud sync status
+    syncState,
+    isOnline,
+
+    // Actions
     handleRestore,
     handleDismissRestore,
-    handleMigrate,
-    handleDismissMigration,
     formatLastSaved,
-    forceSave,
+    forceSave: forceLocalSave,
+    forceSyncNow,
+    retrySync,
     clearSavedData,
-    isLoggedIn: !!user,
   };
 }
 
-// Save indicator component
+// =============================================================================
+// AUTO-SAVE INDICATOR COMPONENT
+// =============================================================================
+
+interface AutoSaveIndicatorProps {
+  isSaving: boolean;
+  lastSaved: string | null;
+  cloudStatus?: CloudStatus;
+  onRetry?: () => void;
+  className?: string;
+}
+
 export function AutoSaveIndicator({
   isSaving,
   lastSaved,
-  isLoggedIn = false,
+  cloudStatus = 'idle',
+  onRetry,
   className = '',
-}: {
-  isSaving: boolean;
-  lastSaved: string | null;
-  isLoggedIn?: boolean;
-  className?: string;
-}) {
+}: AutoSaveIndicatorProps) {
+  // Determine what to show
+  const getIndicator = () => {
+    // Saving locally
+    if (isSaving) {
+      return {
+        dotClass: 'bg-amber-400 animate-pulse',
+        text: 'Zapisywanie...',
+        textClass: 'text-amber-400',
+      };
+    }
+
+    // Cloud syncing
+    if (cloudStatus === 'syncing') {
+      return {
+        dotClass: 'bg-blue-400 animate-pulse',
+        text: 'Synchronizacja...',
+        textClass: 'text-blue-400',
+      };
+    }
+
+    // Error
+    if (cloudStatus === 'error') {
+      return {
+        dotClass: 'bg-red-400',
+        text: 'Błąd synchronizacji',
+        textClass: 'text-red-400',
+        showRetry: true,
+      };
+    }
+
+    // Offline
+    if (cloudStatus === 'offline') {
+      return {
+        dotClass: 'bg-yellow-400',
+        text: lastSaved ? `Offline - ${lastSaved}` : 'Offline',
+        textClass: 'text-yellow-400',
+      };
+    }
+
+    // Synced
+    if (cloudStatus === 'synced' && lastSaved) {
+      return {
+        dotClass: 'bg-emerald-400',
+        text: `Zsynchronizowano ${lastSaved}`,
+        textClass: 'text-slate-500',
+      };
+    }
+
+    // Saved locally only
+    if (lastSaved) {
+      return {
+        dotClass: 'bg-emerald-400',
+        text: `Zapisano ${lastSaved}`,
+        textClass: 'text-slate-500',
+      };
+    }
+
+    return null;
+  };
+
+  const indicator = getIndicator();
+  if (!indicator) return null;
+
   return (
     <div className={`flex items-center gap-2 text-sm ${className}`}>
-      {isSaving ? (
-        <>
-          <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-          <span className="text-slate-400">Zapisywanie...</span>
-        </>
-      ) : lastSaved ? (
-        <>
-          <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-          <span className="text-slate-500">
-            Zapisano {lastSaved}
-            {isLoggedIn && <span className="text-indigo-400 ml-1">(w chmurze)</span>}
-          </span>
-        </>
-      ) : null}
+      <div className={`w-2 h-2 rounded-full ${indicator.dotClass}`} />
+      <span className={indicator.textClass}>{indicator.text}</span>
+      {indicator.showRetry && onRetry && (
+        <button
+          onClick={onRetry}
+          className="text-xs text-blue-400 hover:text-blue-300 underline ml-1"
+        >
+          Ponów
+        </button>
+      )}
     </div>
   );
 }
