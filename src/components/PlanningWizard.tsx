@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QuarterlyPlan, emptyPlan, getPreviousQuarter } from '@/types/plan';
+import { QuarterlyPlan, QuarterType, CustomQuarterMonths, emptyPlan, getPreviousQuarter } from '@/types/plan';
 import ProgressBar from './ProgressBar';
 import QuarterSelector from './QuarterSelector';
 import PlanSummary from './PlanSummary';
@@ -16,7 +16,6 @@ import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useNavigationShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useKonamiCode, EasterEggOverlay } from '@/hooks/useKonamiCode';
 import { usePlanAutoSave, AutoSaveIndicator } from '@/hooks/useAutoSave';
-import { useUnsavedChangesWarning } from '@/hooks/useBeforeUnload';
 import {
   RetrospectiveStep,
   AnnualPlanStep,
@@ -28,7 +27,6 @@ import {
   RisksStep,
   YearContextStep,
 } from './steps';
-import UserMenu from './UserMenu';
 
 const STEPS = [
   'Kwartał',
@@ -85,13 +83,7 @@ export default function PlanningWizard() {
     formatLastSaved,
     handleRestore,
     handleDismissRestore,
-    syncState,
-    retrySync,
   } = usePlanAutoSave(plan, setPlan);
-
-  // Ostrzeżenie przed wyjściem gdy są niezapisane zmiany
-  const hasUnsavedChanges = isSaving || syncState.cloudStatus === 'syncing';
-  useUnsavedChangesWarning(hasUnsavedChanges);
 
   // Start timer when planning begins
   useEffect(() => {
@@ -162,8 +154,12 @@ export default function PlanningWizard() {
           <QuarterSelector
             quarter={plan.quarter}
             year={plan.year}
+            quarterType={plan.quarterType}
+            customQuarterMonths={plan.customQuarterMonths}
             onQuarterChange={(q) => updatePlan('quarter', q)}
             onYearChange={(y) => updatePlan('year', y)}
+            onQuarterTypeChange={(t) => updatePlan('quarterType', t)}
+            onCustomMonthsChange={(m) => updatePlan('customQuarterMonths', m)}
           />
         );
       case 1:
@@ -212,6 +208,8 @@ export default function PlanningWizard() {
           <MilestonesStep
             milestones={plan.milestones}
             quarter={plan.quarter}
+            quarterType={plan.quarterType}
+            customQuarterMonths={plan.customQuarterMonths}
             onChange={(m) => updatePlan('milestones', m)}
           />
         );
@@ -374,8 +372,6 @@ export default function PlanningWizard() {
             <AutoSaveIndicator
               isSaving={isSaving}
               lastSaved={formatLastSaved()}
-              cloudStatus={syncState.cloudStatus}
-              onRetry={retrySync}
               className="hidden md:flex"
             />
 
@@ -411,9 +407,6 @@ export default function PlanningWizard() {
                 {plan.quarter} {plan.year}
               </span>
             )}
-
-            {/* User menu */}
-            <UserMenu />
           </div>
         </div>
       </header>

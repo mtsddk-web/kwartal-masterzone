@@ -1,187 +1,204 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { QuarterlyPlan } from '@/types/plan';
+import { useState } from 'react';
+import {
+  QuarterlyPlan,
+  QuarterType,
+  CustomQuarterMonths,
+  QUARTER_TYPE_NAMES,
+  QUARTER_LABELS,
+  ALL_MONTHS,
+  getQuarterLabel,
+} from '@/types/plan';
 
 interface QuarterSelectorProps {
   quarter: QuarterlyPlan['quarter'];
   year: number;
+  quarterType: QuarterType;
+  customQuarterMonths?: CustomQuarterMonths;
   onQuarterChange: (quarter: QuarterlyPlan['quarter']) => void;
   onYearChange: (year: number) => void;
+  onQuarterTypeChange: (type: QuarterType) => void;
+  onCustomMonthsChange: (months: CustomQuarterMonths) => void;
 }
 
 const quarters: QuarterlyPlan['quarter'][] = ['Q1', 'Q2', 'Q3', 'Q4'];
-const quarterLabels = {
-  Q1: 'Styczeń - Marzec',
-  Q2: 'Kwiecień - Czerwiec',
-  Q3: 'Lipiec - Wrzesień',
-  Q4: 'Październik - Grudzień',
+const quarterTypes: QuarterType[] = ['calendar', 'school', 'financial', 'custom'];
+
+const defaultCustomMonths: CustomQuarterMonths = {
+  Q1: ['Sierpień', 'Wrzesień', 'Październik'],
+  Q2: ['Listopad', 'Grudzień', 'Styczeń'],
+  Q3: ['Luty', 'Marzec', 'Kwiecień'],
+  Q4: ['Maj', 'Czerwiec', 'Lipiec'],
 };
-
-// Pomocnicza funkcja: który kwartał jest aktualny
-function getCurrentQuarter(): number {
-  const month = new Date().getMonth(); // 0-11
-  return Math.floor(month / 3) + 1; // 1-4
-}
-
-// Sprawdź czy kwartał można jeszcze zaplanować
-function isQuarterPlannable(q: QuarterlyPlan['quarter'], selectedYear: number): boolean {
-  const currentYear = new Date().getFullYear();
-  const currentQuarter = getCurrentQuarter();
-  const quarterNum = parseInt(q.charAt(1)); // Q1 -> 1
-
-  // Przyszłe lata - wszystkie kwartały dostępne
-  if (selectedYear > currentYear) return true;
-
-  // Aktualny rok - tylko bieżący i przyszłe kwartały
-  if (selectedYear === currentYear) {
-    return quarterNum >= currentQuarter;
-  }
-
-  // Przeszłe lata - nic nie dostępne (ale nie powinniśmy tu trafić)
-  return false;
-}
 
 export default function QuarterSelector({
   quarter,
   year,
+  quarterType,
+  customQuarterMonths,
   onQuarterChange,
   onYearChange,
+  onQuarterTypeChange,
+  onCustomMonthsChange,
 }: QuarterSelectorProps) {
   const currentYear = new Date().getFullYear();
-  const currentQuarter = getCurrentQuarter();
+  const years = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+  const [showCustomEditor, setShowCustomEditor] = useState(false);
 
-  // Steve Jobs: "Simplicity is the ultimate sophistication"
-  // Tylko planowalne lata: obecny + 2 przyszłe
-  const years = [currentYear, currentYear + 1, currentYear + 2];
+  // Use provided custom months or defaults
+  const effectiveCustomMonths = customQuarterMonths || defaultCustomMonths;
+
+  const handleQuarterTypeChange = (type: QuarterType) => {
+    onQuarterTypeChange(type);
+    if (type === 'custom' && !customQuarterMonths) {
+      onCustomMonthsChange(defaultCustomMonths);
+      setShowCustomEditor(true);
+    } else if (type === 'custom') {
+      setShowCustomEditor(true);
+    } else {
+      setShowCustomEditor(false);
+    }
+  };
+
+  const handleCustomMonthChange = (q: QuarterlyPlan['quarter'], monthIndex: number, value: string) => {
+    const newMonths = { ...effectiveCustomMonths };
+    newMonths[q] = [...newMonths[q]] as [string, string, string];
+    newMonths[q][monthIndex] = value;
+    onCustomMonthsChange(newMonths);
+  };
 
   return (
     <div className="animate-fade-up">
       {/* Header */}
-      <div className="text-center mb-10">
-        <h2 className="font-display text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white mb-3">
+      <div className="text-center mb-8">
+        <h2 className="font-display text-3xl md:text-4xl font-semibold text-white mb-3">
           Który kwartał planujesz?
         </h2>
-        <p className="text-slate-600 dark:text-slate-400 text-lg">
+        <p className="text-slate-400 text-lg">
           Wybierz okres, na który tworzysz plan strategiczny
         </p>
       </div>
 
-      {/* Year selector - iOS Segmented Control style */}
-      <div className="flex justify-center mb-10">
-        <div className="relative inline-flex p-1 bg-slate-200/80 dark:bg-night-800/80 rounded-2xl backdrop-blur-sm border border-slate-300/50 dark:border-night-700/30 shadow-sm dark:shadow-none">
-          {/* Animated background slider */}
-          <motion.div
-            layoutId="yearSelector"
-            className="absolute top-1 bottom-1 bg-gradient-to-br from-ember-400 to-ember-500 rounded-xl shadow-lg shadow-ember-500/30"
-            style={{
-              width: `calc(${100 / years.length}% - 4px)`,
-              left: `calc(${years.indexOf(year) * (100 / years.length)}% + 2px)`,
-            }}
-            transition={{
-              type: 'spring',
-              stiffness: 400,
-              damping: 30,
-            }}
-          />
+      {/* Quarter Type Tabs */}
+      <div className="flex flex-wrap justify-center gap-2 mb-6">
+        {quarterTypes.map((type) => (
+          <button
+            key={type}
+            onClick={() => handleQuarterTypeChange(type)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+              quarterType === type
+                ? 'bg-ember-500 text-night-900 shadow-lg shadow-ember-500/25'
+                : 'bg-night-800 text-slate-300 hover:bg-night-700 hover:text-white'
+            }`}
+          >
+            {QUARTER_TYPE_NAMES[type]}
+          </button>
+        ))}
+      </div>
 
-          {years.map((y) => (
+      {/* Custom Quarter Editor */}
+      {quarterType === 'custom' && showCustomEditor && (
+        <div className="mb-8 p-4 bg-night-800/50 border border-night-700 rounded-xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-slate-300">Zdefiniuj własne miesiące dla każdego kwartału</h3>
             <button
-              key={y}
-              onClick={() => onYearChange(y)}
-              className="relative z-10 flex flex-col items-center justify-center min-w-[100px] md:min-w-[120px] py-3 px-6 transition-colors duration-200"
+              onClick={() => setShowCustomEditor(false)}
+              className="text-xs text-slate-500 hover:text-slate-300"
             >
-              <span
-                className={`text-xl md:text-2xl font-semibold tracking-tight transition-colors duration-200 ${
-                  year === y
-                    ? 'text-night-900'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
-              >
-                {y}
-              </span>
-              {y === currentYear && (
-                <span
-                  className={`text-[10px] uppercase tracking-widest font-medium mt-0.5 transition-colors duration-200 ${
-                    year === y ? 'text-night-900/70' : 'text-slate-400 dark:text-slate-500'
-                  }`}
-                >
-                  teraz
-                </span>
-              )}
+              Zwiń
             </button>
-          ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {quarters.map((q) => (
+              <div key={q} className="p-3 bg-night-900/50 rounded-lg">
+                <div className="text-sm font-medium text-ember-400 mb-2">{q}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[0, 1, 2].map((idx) => (
+                    <select
+                      key={idx}
+                      value={effectiveCustomMonths[q][idx]}
+                      onChange={(e) => handleCustomMonthChange(q, idx, e.target.value)}
+                      className="px-2 py-1.5 bg-night-800 border border-night-700 rounded text-xs text-white"
+                    >
+                      {ALL_MONTHS.map((month) => (
+                        <option key={month} value={month}>{month.substring(0, 3)}</option>
+                      ))}
+                    </select>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* Collapsed custom info */}
+      {quarterType === 'custom' && !showCustomEditor && (
+        <div className="mb-6 text-center">
+          <button
+            onClick={() => setShowCustomEditor(true)}
+            className="text-sm text-ember-400 hover:text-ember-300 underline"
+          >
+            Edytuj własne miesiące
+          </button>
+        </div>
+      )}
+
+      {/* Year selector */}
+      <div className="flex justify-center gap-2 mb-8">
+        {years.map((y) => (
+          <button
+            key={y}
+            onClick={() => onYearChange(y)}
+            className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 ${
+              year === y
+                ? 'bg-ember-500 text-night-900 shadow-lg shadow-ember-500/25'
+                : 'bg-night-800 text-slate-300 hover:bg-night-700 hover:text-white'
+            }`}
+          >
+            {y}
+          </button>
+        ))}
       </div>
 
       {/* Quarter selector */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
         {quarters.map((q, index) => {
-          const isPlannable = isQuarterPlannable(q, year);
-          const isSelected = quarter === q;
-          const isCurrent = year === currentYear && parseInt(q.charAt(1)) === currentQuarter;
+          const label = quarterType === 'custom'
+            ? getQuarterLabel(q, quarterType, effectiveCustomMonths)
+            : QUARTER_LABELS[quarterType][q];
 
           return (
             <button
               key={q}
-              onClick={() => isPlannable && onQuarterChange(q)}
-              disabled={!isPlannable}
-              className={`group relative p-6 rounded-2xl transition-all duration-300 shadow-sm dark:shadow-none ${
-                !isPlannable
-                  ? 'bg-slate-100/50 dark:bg-night-900/30 cursor-not-allowed opacity-50'
-                  : isSelected
-                  ? 'bg-gradient-to-br from-slate-100 dark:from-night-700 to-white dark:to-night-800 ring-2 ring-ember-500 card-hover'
-                  : 'bg-white/80 dark:bg-night-800/50 hover:bg-slate-50 dark:hover:bg-night-800 border border-slate-200 dark:border-transparent card-hover'
+              onClick={() => onQuarterChange(q)}
+              className={`group relative p-6 rounded-2xl transition-all duration-300 card-hover ${
+                quarter === q
+                  ? 'bg-gradient-to-br from-night-700 to-night-800 ring-2 ring-ember-500'
+                  : 'bg-night-800/50 hover:bg-night-800'
               }`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Quarter badge */}
               <div
                 className={`text-4xl font-display font-bold mb-2 transition-colors ${
-                  !isPlannable
-                    ? 'text-slate-300 dark:text-slate-600'
-                    : isSelected
-                    ? 'text-gradient'
-                    : 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+                  quarter === q ? 'text-gradient' : 'text-slate-400 group-hover:text-white'
                 }`}
               >
                 {q}
               </div>
 
               {/* Month range */}
-              <div className={`text-sm ${
-                !isPlannable
-                  ? 'text-slate-300 dark:text-slate-600'
-                  : isSelected
-                  ? 'text-ember-500 dark:text-ember-300'
-                  : 'text-slate-500'
-              }`}>
-                {quarterLabels[q]}
+              <div className={`text-sm ${quarter === q ? 'text-ember-300' : 'text-slate-500'}`}>
+                {label}
               </div>
 
-              {/* Current quarter indicator */}
-              {isCurrent && isPlannable && (
-                <div className="absolute top-3 left-3">
-                  <span className="text-[9px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
-                    teraz
-                  </span>
-                </div>
-              )}
-
-              {/* Past quarter indicator */}
-              {!isPlannable && (
-                <div className="absolute top-3 left-3">
-                  <span className="text-[9px] uppercase tracking-wider font-medium text-slate-400 dark:text-slate-600">
-                    miniony
-                  </span>
-                </div>
-              )}
-
               {/* Selected indicator */}
-              {isSelected && (
+              {quarter === q && (
                 <div className="absolute top-3 right-3">
                   <div className="w-6 h-6 rounded-full bg-ember-500 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white dark:text-night-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-night-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -194,9 +211,14 @@ export default function QuarterSelector({
 
       {/* Selected summary */}
       <div className="text-center mt-8">
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-slate-400">
           Tworzysz plan na{' '}
-          <span className="text-ember-600 dark:text-ember-400 font-semibold">{quarter} {year}</span>
+          <span className="text-ember-400 font-semibold">{quarter} {year}</span>
+          {quarterType !== 'calendar' && (
+            <span className="text-slate-500 text-sm ml-2">
+              ({QUARTER_TYPE_NAMES[quarterType]})
+            </span>
+          )}
         </p>
       </div>
     </div>

@@ -71,20 +71,16 @@ function AuthCallbackContent() {
   );
 }
 
-function LoadingFallback() {
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin w-10 h-10 border-3 border-ember-500 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-slate-600 dark:text-slate-400">Ładowanie...</p>
-      </div>
-    </div>
-  );
-}
-
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-10 h-10 border-3 border-ember-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-slate-600 dark:text-slate-400">Trwa logowanie...</p>
+        </div>
+      </div>
+    }>
       <AuthCallbackContent />
     </Suspense>
   );

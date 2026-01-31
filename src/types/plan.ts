@@ -62,7 +62,6 @@ export interface AnnualPlan {
 export interface Goal {
   name: string;
   why: string;
-  actions: string; // Konkretne działania prowadzące do celu
 }
 
 export interface Project {
@@ -91,10 +90,23 @@ export interface IfThenRule {
   action: string; // "To zrobię..."
 }
 
+export type QuarterType = 'calendar' | 'school' | 'financial' | 'custom';
+
+export type QuarterMonths = [string, string, string];
+
+export interface CustomQuarterMonths {
+  Q1: QuarterMonths;
+  Q2: QuarterMonths;
+  Q3: QuarterMonths;
+  Q4: QuarterMonths;
+}
+
 export interface QuarterlyPlan {
   // Metadata
   quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
   year: number;
+  quarterType: QuarterType;
+  customQuarterMonths?: CustomQuarterMonths;
   createdAt?: string;
 
   // NOWE: Retrospektywa poprzedniego okresu
@@ -176,25 +188,10 @@ export const emptyAnnualPlan: AnnualPlan = {
   rules: ['', '', ''],
 };
 
-// Funkcja pomocnicza: oblicz następny kwartał do zaplanowania
-function getNextPlannableQuarter(): { quarter: QuarterlyPlan['quarter']; year: number } {
-  const now = new Date();
-  const currentMonth = now.getMonth(); // 0-11
-  const currentYear = now.getFullYear();
-  const currentQuarter = Math.floor(currentMonth / 3) + 1; // 1-4
-
-  // Następny kwartał
-  if (currentQuarter === 4) {
-    return { quarter: 'Q1', year: currentYear + 1 };
-  }
-  return { quarter: `Q${currentQuarter + 1}` as QuarterlyPlan['quarter'], year: currentYear };
-}
-
-const nextQuarter = getNextPlannableQuarter();
-
 export const emptyPlan: QuarterlyPlan = {
-  quarter: nextQuarter.quarter,
-  year: nextQuarter.year,
+  quarter: 'Q1',
+  year: new Date().getFullYear(),
+  quarterType: 'calendar',
 
   // Retrospektywa
   retrospective: emptyRetrospective,
@@ -213,9 +210,9 @@ export const emptyPlan: QuarterlyPlan = {
 
   // Cele
   goals: [
-    { name: '', why: '', actions: '' },
-    { name: '', why: '', actions: '' },
-    { name: '', why: '', actions: '' },
+    { name: '', why: '' },
+    { name: '', why: '' },
+    { name: '', why: '' },
   ],
   definitionOfDone: ['', '', ''],
   weeklyLeadMeasures: ['', '', ''],
@@ -264,6 +261,7 @@ export const emptyPlan: QuarterlyPlan = {
 export const examplePlan: QuarterlyPlan = {
   quarter: 'Q1',
   year: 2026,
+  quarterType: 'calendar',
 
   retrospective: {
     previousGoals: 'Launch SaaS, 10 klientów, automatyzacja',
@@ -288,7 +286,7 @@ export const examplePlan: QuarterlyPlan = {
       'Zespół 3 osoby',
       '4-dniowy tydzień pracy',
     ],
-    oneWord: 'WZROST',
+    oneWord: 'SCALE',
     goals: [
       {
         name: '100 płacących klientów',
@@ -326,12 +324,12 @@ export const examplePlan: QuarterlyPlan = {
   braveAction: 'Podniosę ceny o 50% dla nowych klientów',
 
   northStar: '25 nowych klientów',
-  oneWord: 'ROZPĘD',
+  oneWord: 'MOMENTUM',
 
   goals: [
-    { name: '+25 płacących klientów', why: 'Fundament pod roczny cel 100 klientów', actions: '5 demo calls tygodniowo, cold outreach 20 firm, content marketing' },
-    { name: 'Zatrudnić pierwszą osobę', why: 'Delegacja = skalowalność', actions: 'Job posting, 10 rozmów, onboarding plan' },
-    { name: 'System referralowy live', why: 'Organiczny wzrost bez reklam', actions: 'Zaprojektować program, zaimplementować w app, poinformować klientów' },
+    { name: '+25 płacących klientów', why: 'Fundament pod roczny cel 100 klientów' },
+    { name: 'Zatrudnić pierwszą osobę', why: 'Delegacja = skalowalność' },
+    { name: 'System referralowy live', why: 'Organiczny wzrost bez reklam' },
   ],
   definitionOfDone: [
     '32 aktywne subskrypcje (7+25)',
@@ -380,14 +378,97 @@ export const examplePlan: QuarterlyPlan = {
 // HELPERY
 // ============================================
 
-export const getQuarterMonths = (quarter: QuarterlyPlan['quarter']): string[] => {
-  const months = {
+// Quarter month definitions for each quarter type
+export const QUARTER_MONTHS: Record<QuarterType, Record<QuarterlyPlan['quarter'], QuarterMonths>> = {
+  calendar: {
     Q1: ['Styczeń', 'Luty', 'Marzec'],
     Q2: ['Kwiecień', 'Maj', 'Czerwiec'],
     Q3: ['Lipiec', 'Sierpień', 'Wrzesień'],
     Q4: ['Październik', 'Listopad', 'Grudzień'],
-  };
-  return months[quarter];
+  },
+  school: {
+    Q1: ['Wrzesień', 'Październik', 'Listopad'],
+    Q2: ['Grudzień', 'Styczeń', 'Luty'],
+    Q3: ['Marzec', 'Kwiecień', 'Maj'],
+    Q4: ['Czerwiec', 'Lipiec', 'Sierpień'],
+  },
+  financial: {
+    Q1: ['Kwiecień', 'Maj', 'Czerwiec'],
+    Q2: ['Lipiec', 'Sierpień', 'Wrzesień'],
+    Q3: ['Październik', 'Listopad', 'Grudzień'],
+    Q4: ['Styczeń', 'Luty', 'Marzec'],
+  },
+  custom: {
+    Q1: ['Miesiąc 1', 'Miesiąc 2', 'Miesiąc 3'],
+    Q2: ['Miesiąc 4', 'Miesiąc 5', 'Miesiąc 6'],
+    Q3: ['Miesiąc 7', 'Miesiąc 8', 'Miesiąc 9'],
+    Q4: ['Miesiąc 10', 'Miesiąc 11', 'Miesiąc 12'],
+  },
+};
+
+// Quarter label definitions (short form for UI)
+export const QUARTER_LABELS: Record<QuarterType, Record<QuarterlyPlan['quarter'], string>> = {
+  calendar: {
+    Q1: 'Sty-Mar',
+    Q2: 'Kwi-Cze',
+    Q3: 'Lip-Wrz',
+    Q4: 'Paź-Gru',
+  },
+  school: {
+    Q1: 'Wrz-Lis',
+    Q2: 'Gru-Lut',
+    Q3: 'Mar-Maj',
+    Q4: 'Cze-Sie',
+  },
+  financial: {
+    Q1: 'Kwi-Cze',
+    Q2: 'Lip-Wrz',
+    Q3: 'Paź-Gru',
+    Q4: 'Sty-Mar',
+  },
+  custom: {
+    Q1: 'Własny',
+    Q2: 'Własny',
+    Q3: 'Własny',
+    Q4: 'Własny',
+  },
+};
+
+export const QUARTER_TYPE_NAMES: Record<QuarterType, string> = {
+  calendar: 'Kalendarzowy',
+  school: 'Rok szkolny',
+  financial: 'Rok finansowy',
+  custom: 'Własny podział',
+};
+
+export const ALL_MONTHS = [
+  'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+  'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+];
+
+export const getQuarterMonths = (
+  quarter: QuarterlyPlan['quarter'],
+  quarterType: QuarterType = 'calendar',
+  customQuarterMonths?: CustomQuarterMonths
+): string[] => {
+  if (quarterType === 'custom' && customQuarterMonths) {
+    return [...customQuarterMonths[quarter]];
+  }
+  return [...QUARTER_MONTHS[quarterType][quarter]];
+};
+
+export const getQuarterLabel = (
+  quarter: QuarterlyPlan['quarter'],
+  quarterType: QuarterType = 'calendar',
+  customQuarterMonths?: CustomQuarterMonths
+): string => {
+  if (quarterType === 'custom' && customQuarterMonths) {
+    const months = customQuarterMonths[quarter];
+    const first = months[0].substring(0, 3);
+    const last = months[2].substring(0, 3);
+    return `${first}-${last}`;
+  }
+  return QUARTER_LABELS[quarterType][quarter];
 };
 
 export const getPreviousQuarter = (quarter: QuarterlyPlan['quarter'], year: number): { quarter: QuarterlyPlan['quarter']; year: number } => {
