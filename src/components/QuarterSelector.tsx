@@ -61,10 +61,39 @@ export default function QuarterSelector({
     }
   };
 
+  // Helper to get next months in sequence
+  const getNextMonths = (startMonth: string, count: number): string[] => {
+    const startIndex = ALL_MONTHS.indexOf(startMonth);
+    if (startIndex === -1) return [];
+    const result: string[] = [];
+    for (let i = 0; i < count; i++) {
+      result.push(ALL_MONTHS[(startIndex + i) % 12]);
+    }
+    return result;
+  };
+
   const handleCustomMonthChange = (q: QuarterlyPlan['quarter'], monthIndex: number, value: string) => {
     const newMonths = { ...effectiveCustomMonths };
-    newMonths[q] = [...newMonths[q]] as [string, string, string];
-    newMonths[q][monthIndex] = value;
+
+    // If changing first month of Q1, auto-fill entire year
+    if (q === 'Q1' && monthIndex === 0) {
+      const yearMonths = getNextMonths(value, 12);
+      newMonths.Q1 = [yearMonths[0], yearMonths[1], yearMonths[2]] as [string, string, string];
+      newMonths.Q2 = [yearMonths[3], yearMonths[4], yearMonths[5]] as [string, string, string];
+      newMonths.Q3 = [yearMonths[6], yearMonths[7], yearMonths[8]] as [string, string, string];
+      newMonths.Q4 = [yearMonths[9], yearMonths[10], yearMonths[11]] as [string, string, string];
+    }
+    // If changing first month of other quarters, auto-fill that quarter
+    else if (monthIndex === 0) {
+      const quarterMonths = getNextMonths(value, 3);
+      newMonths[q] = quarterMonths as [string, string, string];
+    }
+    // Otherwise just change single month
+    else {
+      newMonths[q] = [...newMonths[q]] as [string, string, string];
+      newMonths[q][monthIndex] = value;
+    }
+
     onCustomMonthsChange(newMonths);
   };
 
@@ -100,7 +129,7 @@ export default function QuarterSelector({
       {/* Custom Quarter Editor */}
       {quarterType === 'custom' && showCustomEditor && (
         <div className="mb-8 p-4 bg-night-800/50 border border-night-700 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium text-slate-300">Zdefiniuj własne miesiące dla każdego kwartału</h3>
             <button
               onClick={() => setShowCustomEditor(false)}
@@ -109,6 +138,9 @@ export default function QuarterSelector({
               Zwiń
             </button>
           </div>
+          <p className="text-xs text-slate-500 mb-4">
+            Wybierz pierwszy miesiąc Q1 - reszta wypełni się automatycznie
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {quarters.map((q) => (
               <div key={q} className="p-3 bg-night-900/50 rounded-lg">
