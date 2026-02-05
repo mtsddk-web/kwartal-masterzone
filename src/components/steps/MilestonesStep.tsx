@@ -1,19 +1,17 @@
 'use client';
 
-import { Milestone, QuarterlyPlan, QuarterType, CustomQuarterMonths, getQuarterMonths, examplePlan } from '@/types/plan';
+import { Milestone, QuarterlyPlan, getQuarterMonths, examplePlan } from '@/types/plan';
 import HelpTooltip from '../HelpTooltip';
 import { helpContent } from '@/data/helpContent';
 
 interface MilestonesStepProps {
   milestones: Milestone;
   quarter: QuarterlyPlan['quarter'];
-  quarterType?: QuarterType;
-  customQuarterMonths?: CustomQuarterMonths;
   onChange: (milestones: Milestone) => void;
 }
 
-export default function MilestonesStep({ milestones, quarter, quarterType = 'calendar', customQuarterMonths, onChange }: MilestonesStepProps) {
-  const months = getQuarterMonths(quarter, quarterType, customQuarterMonths);
+export default function MilestonesStep({ milestones, quarter, onChange }: MilestonesStepProps) {
+  const months = getQuarterMonths(quarter);
 
   const updateMilestone = (field: keyof Milestone, value: string) => {
     onChange({ ...milestones, [field]: value });

@@ -4,17 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme (default) */
-:root,
-.dark {
-  --bg-primary: #080716;
-  --bg-secondary: #0f0d24;
-  --bg-tertiary: #1e1b4b;
-  --bg-card: rgba(30, 27, 75, 0.6);
-  --border-color: rgba(99, 102, 241, 0.2);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+:root {
   --night-950: #080716;
   --night-900: #0f0d24;
   --night-800: #1e1b4b;
@@ -22,25 +12,6 @@
   --night-600: #4338ca;
   --ember-500: #f59e0b;
   --ember-400: #fbbf24;
-  --grain-opacity: 0.03;
-}
-
-/* Light theme */
-.light {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
-  --bg-tertiary: #e2e8f0;
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --border-color: rgba(148, 163, 184, 0.3);
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --night-950: #f8fafc;
-  --night-900: #f1f5f9;
-  --night-800: #e2e8f0;
-  --night-700: #cbd5e1;
-  --night-600: #94a3b8;
-  --grain-opacity: 0.02;
 }
 
 * {
@@ -53,11 +24,10 @@ html {
 
 body {
   font-family: 'Outfit', system-ui, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--night-950);
+  color: #e2e8f0;
   min-height: 100vh;
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Grain texture overlay */
@@ -70,13 +40,12 @@ body::before {
   height: 100%;
   pointer-events: none;
   z-index: 9999;
-  opacity: var(--grain-opacity);
+  opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
-/* Gradient mesh background - dark theme */
-.dark .gradient-mesh,
-:root:not(.light) .gradient-mesh {
+/* Gradient mesh background */
+.gradient-mesh {
   position: fixed;
   top: 0;
   left: 0;
@@ -87,22 +56,7 @@ body::before {
     radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 50%, rgba(30, 27, 75, 0.5) 0%, transparent 70%),
-    #080716;
-}
-
-/* Gradient mesh background - light theme */
-.light .gradient-mesh {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(241, 245, 249, 0.8) 0%, transparent 70%),
-    #f8fafc;
+    var(--night-950);
 }
 
 /* Custom scrollbar */
@@ -111,16 +65,16 @@ body::before {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--night-900);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--night-700);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--night-600);
 }
 
 /* Typography */
@@ -135,57 +89,20 @@ body::before {
   background-clip: text;
 }
 
-/* Form elements - Mobile-first UX */
+/* Form elements */
 input, textarea, select {
   font-family: 'Outfit', system-ui, sans-serif;
-  font-size: 16px; /* Prevents iOS zoom on focus */
 }
 
 input::placeholder,
 textarea::placeholder {
   color: rgba(148, 163, 184, 0.5);
-  transition: opacity 0.2s ease;
-}
-
-/* Hide placeholder on focus for cleaner UX */
-input:focus::placeholder,
-textarea:focus::placeholder {
-  opacity: 0.3;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-}
-
-/* Enhanced focus states for mobile */
-@media (max-width: 768px) {
-  input, textarea, select {
-    min-height: 48px; /* Larger touch targets */
-    padding: 14px 16px;
-  }
-
-  textarea {
-    min-height: auto;
-  }
-
-  /* Stronger focus ring on mobile */
-  input:focus,
-  textarea:focus,
-  select:focus {
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
-    border-color: rgb(251, 191, 36) !important;
-  }
-}
-
-/* Focus-visible for keyboard navigation */
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible,
-button:focus-visible {
-  outline: 2px solid rgb(251, 191, 36);
-  outline-offset: 2px;
 }
 
 /* Range slider styling */

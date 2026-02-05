@@ -179,10 +179,11 @@ export function parseMarkdownToPlan(markdown: string): Partial<QuarterlyPlan> {
       plan.goals.push({
         name: match[1].trim(),
         why: match[2]?.trim() || '',
+        actions: match[3]?.trim() || '',
       });
     }
     while (plan.goals.length < 3) {
-      plan.goals.push({ name: '', why: '' });
+      plan.goals.push({ name: '', why: '', actions: '' });
     }
   }
 

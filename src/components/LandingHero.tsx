@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TypingText from './effects/TypingText';
 import FloatingElements from './effects/FloatingElements';
 import ParticlesBackground from './effects/ParticlesBackground';
+import Link from 'next/link';
 
 interface LandingHeroProps {
   onStart: () => void;
@@ -25,9 +26,9 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
-    // Stagger the animations - faster for better UX
-    const timer1 = setTimeout(() => setShowContent(true), 300);
-    const timer2 = setTimeout(() => setShowButton(true), 1500);
+    // Stagger the animations
+    const timer1 = setTimeout(() => setShowContent(true), 500);
+    const timer2 = setTimeout(() => setShowButton(true), 3000);
 
     return () => {
       clearTimeout(timer1);
@@ -37,6 +38,16 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4">
+      {/* Top bar z logowaniem */}
+      <div className="absolute top-0 left-0 right-0 p-4 flex justify-end z-20">
+        <Link
+          href="/login"
+          className="px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-night-800/50 backdrop-blur-sm border border-night-700/50 hover:border-night-600 rounded-xl transition-all hover:shadow-sm"
+        >
+          Zaloguj się
+        </Link>
+      </div>
+
       {/* Background effects */}
       <ParticlesBackground />
       <FloatingElements />
@@ -57,19 +68,19 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
               transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
               className="mb-8"
             >
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-night-800/50 backdrop-blur-sm rounded-2xl border border-slate-300 dark:border-night-700/50 shadow-xl dark:shadow-none">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center shadow-md">
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-night-800/50 backdrop-blur-sm rounded-2xl border border-night-700/50">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <span className="text-slate-900 dark:text-slate-300 font-semibold">MasterZone</span>
+                <span className="text-slate-300 font-medium">MasterZone</span>
               </div>
             </motion.div>
 
             {/* Main title with typing effect */}
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6">
-              <span className="text-slate-900 dark:text-white" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>Plan </span>
+              <span className="text-white">Plan </span>
               <span className="text-gradient">
                 <TypingText
                   text="Kwartału"
@@ -84,10 +95,10 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.0, duration: 0.6 }}
-              className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto"
+              transition={{ delay: 2.5, duration: 0.8 }}
+              className="text-xl md:text-2xl text-slate-400 mb-8 max-w-2xl mx-auto"
             >
-              Zaplanuj następne <span className="text-ember-500 dark:text-ember-400 font-semibold">90 dni</span> strategicznie.
+              Zaplanuj następne <span className="text-ember-400 font-semibold">90 dni</span> strategicznie.
               <br className="hidden md:block" />
               Wizja → Cele → Projekty → Egzekucja.
             </motion.p>
@@ -96,11 +107,11 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2, duration: 0.6 }}
-              className="mb-12 p-6 bg-white dark:bg-night-800/30 backdrop-blur-sm rounded-2xl border border-slate-300 dark:border-night-700/30 max-w-xl mx-auto shadow-xl dark:shadow-none"
+              transition={{ delay: 3.2, duration: 0.8 }}
+              className="mb-12 p-6 bg-night-800/30 backdrop-blur-sm rounded-2xl border border-night-700/30 max-w-xl mx-auto"
             >
-              <p className="text-slate-800 dark:text-slate-300 italic text-lg mb-2">"{quote.text}"</p>
-              <p className="text-ember-600 dark:text-ember-400 text-sm font-semibold">— {quote.author}</p>
+              <p className="text-slate-300 italic text-lg mb-2">"{quote.text}"</p>
+              <p className="text-ember-400 text-sm">— {quote.author}</p>
             </motion.div>
 
             {/* CTA Button */}
@@ -146,6 +157,32 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
                     </span>
                   </button>
 
+                  {/* Timer hint */}
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-6 text-slate-500 text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Zajmie Ci to około 5-10 minut
+                  </motion.p>
+
+                  {/* Login hint */}
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                    className="mt-3 text-slate-600 text-xs"
+                  >
+                    Dane zapisywane lokalnie w przeglądarce.{' '}
+                    <Link href="/login" className="text-ember-400 hover:text-ember-300 underline">
+                      Zaloguj się
+                    </Link>
+                    , aby synchronizować między urządzeniami.
+                  </motion.p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -157,7 +194,7 @@ export default function LandingHero({ onStart }: LandingHeroProps) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5, y: [0, 10, 0] }}
-        transition={{ delay: 2, duration: 2, repeat: Infinity }}
+        transition={{ delay: 4, duration: 2, repeat: Infinity }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
         <svg className="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

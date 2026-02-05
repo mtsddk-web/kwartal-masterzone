@@ -1,11 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
-
-// =============================================================================
-// TYPES
-// =============================================================================
 
 interface AutoSaveOptions<T> {
   key: string;
@@ -14,26 +9,6 @@ interface AutoSaveOptions<T> {
   onSave?: (data: T) => void;
   onRestore?: (data: T) => void;
 }
-
-export type CloudStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
-export type LocalStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-interface SyncState {
-  localStatus: LocalStatus;
-  cloudStatus: CloudStatus;
-  lastSyncedAt: Date | null;
-  lastLocalSaveAt: Date | null;
-  retryCount: number;
-  errorMessage: string | null;
-}
-
-// Retry delays in ms (exponential backoff)
-const RETRY_DELAYS = [1000, 2000, 4000, 8000, 16000];
-const MAX_RETRIES = RETRY_DELAYS.length;
-
-// =============================================================================
-// BASIC AUTO-SAVE HOOK (localStorage only)
-// =============================================================================
 
 export function useAutoSave<T>({
   key,
@@ -47,6 +22,7 @@ export function useAutoSave<T>({
   const [isSaving, setIsSaving] = useState(false);
   const previousDataRef = useRef<string>();
 
+  // Save data to localStorage
   const saveData = useCallback(
     (dataToSave: T) => {
       try {
@@ -56,6 +32,7 @@ export function useAutoSave<T>({
           version: 1,
         });
 
+        // Only save if data actually changed
         if (serialized === previousDataRef.current) return;
 
         previousDataRef.current = serialized;
@@ -71,6 +48,7 @@ export function useAutoSave<T>({
     [key, onSave]
   );
 
+  // Restore data from localStorage
   const restoreData = useCallback((): T | null => {
     try {
       const stored = localStorage.getItem(key);
@@ -85,16 +63,19 @@ export function useAutoSave<T>({
     }
   }, [key, onRestore]);
 
+  // Clear saved data
   const clearSavedData = useCallback(() => {
     localStorage.removeItem(key);
     setLastSaved(null);
     previousDataRef.current = undefined;
   }, [key]);
 
+  // Check if saved data exists
   const hasSavedData = useCallback((): boolean => {
     return localStorage.getItem(key) !== null;
   }, [key]);
 
+  // Get saved timestamp
   const getSavedTimestamp = useCallback((): Date | null => {
     try {
       const stored = localStorage.getItem(key);
@@ -107,13 +88,16 @@ export function useAutoSave<T>({
     }
   }, [key]);
 
+  // Auto-save effect with debounce
   useEffect(() => {
+    // Clear previous timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
     setIsSaving(true);
 
+    // Set new timeout
     timeoutRef.current = setTimeout(() => {
       saveData(data);
     }, delay);
@@ -136,66 +120,11 @@ export function useAutoSave<T>({
   };
 }
 
-// =============================================================================
-// PLAN AUTO-SAVE WITH SUPABASE SYNC
-// =============================================================================
-
-interface PlanAutoSaveOptions {
-  planId?: string;
-  quarter: string;
-  year: number;
-  userId?: string;
-}
-
-export function usePlanAutoSave<T extends object>(
-  plan: T,
-  onChange: (plan: T) => void,
-  options?: PlanAutoSaveOptions
-) {
+// Hook specifically for quarterly plan
+export function usePlanAutoSave<T>(plan: T, onChange: (plan: T) => void) {
   const [hasRestoredData, setHasRestoredData] = useState(false);
   const [showRestorePrompt, setShowRestorePrompt] = useState(false);
 
-  // Sync state
-  const [syncState, setSyncState] = useState<SyncState>({
-    localStatus: 'idle',
-    cloudStatus: isSupabaseConfigured() ? 'idle' : 'offline',
-    lastSyncedAt: null,
-    lastLocalSaveAt: null,
-    retryCount: 0,
-    errorMessage: null,
-  });
-
-  const syncTimeoutRef = useRef<NodeJS.Timeout>();
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
-  const previousPlanRef = useRef<string>();
-  const isMountedRef = useRef(true);
-
-  // Check online status
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Update cloud status based on online state
-  useEffect(() => {
-    if (!isOnline && syncState.cloudStatus !== 'offline') {
-      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
-    }
-  }, [isOnline, syncState.cloudStatus]);
-
-  // Basic localStorage save
   const {
     lastSaved,
     isSaving,
@@ -203,155 +132,15 @@ export function usePlanAutoSave<T extends object>(
     clearSavedData,
     hasSavedData,
     getSavedTimestamp,
-    forceSave: forceLocalSave,
+    forceSave,
   } = useAutoSave({
     key: 'masterzone-quarterly-plan',
     data: plan,
     delay: 2000,
     onSave: () => {
-      setSyncState(prev => ({
-        ...prev,
-        localStatus: 'saved',
-        lastLocalSaveAt: new Date()
-      }));
+      // Could trigger a toast notification here
     },
   });
-
-  // Sync to Supabase
-  const syncToCloud = useCallback(async (dataToSync: T, retry = false) => {
-    if (!isSupabaseConfigured() || !isOnline) {
-      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
-      return;
-    }
-
-    const supabase = createClient();
-    if (!supabase) {
-      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
-      return;
-    }
-
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      // Not logged in - stay in offline mode (localStorage only)
-      setSyncState(prev => ({ ...prev, cloudStatus: 'offline' }));
-      return;
-    }
-
-    setSyncState(prev => ({ ...prev, cloudStatus: 'syncing' }));
-
-    try {
-      const quarter = options?.quarter || (dataToSync as { quarter?: string }).quarter || 'Q1';
-      const year = options?.year || (dataToSync as { year?: number }).year || new Date().getFullYear();
-
-      // Check if plan exists
-      const { data: existingPlan, error: fetchError } = await supabase
-        .from('quarterly_plans')
-        .select('id, version')
-        .eq('user_id', user.id)
-        .eq('quarter', quarter)
-        .eq('year', year)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (existingPlan) {
-        // Update existing plan
-        const { error: updateError } = await supabase
-          .from('quarterly_plans')
-          .update({
-            plan_data: dataToSync,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingPlan.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Insert new plan
-        const { error: insertError } = await supabase
-          .from('quarterly_plans')
-          .insert({
-            user_id: user.id,
-            quarter,
-            year,
-            plan_data: dataToSync,
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      if (isMountedRef.current) {
-        setSyncState(prev => ({
-          ...prev,
-          cloudStatus: 'synced',
-          lastSyncedAt: new Date(),
-          retryCount: 0,
-          errorMessage: null,
-        }));
-      }
-    } catch (error) {
-      console.error('Cloud sync failed:', error);
-
-      if (isMountedRef.current) {
-        const currentRetry = retry ? syncState.retryCount : 0;
-
-        if (currentRetry < MAX_RETRIES) {
-          // Schedule retry
-          const retryDelay = RETRY_DELAYS[currentRetry];
-          setSyncState(prev => ({
-            ...prev,
-            cloudStatus: 'error',
-            retryCount: currentRetry + 1,
-            errorMessage: `Sync failed. Retrying in ${retryDelay / 1000}s...`,
-          }));
-
-          retryTimeoutRef.current = setTimeout(() => {
-            syncToCloud(dataToSync, true);
-          }, retryDelay);
-        } else {
-          setSyncState(prev => ({
-            ...prev,
-            cloudStatus: 'error',
-            errorMessage: 'Sync failed after multiple attempts. Data saved locally.',
-          }));
-        }
-      }
-    }
-  }, [isOnline, options?.quarter, options?.year, syncState.retryCount]);
-
-  // Trigger cloud sync after local save (debounced)
-  useEffect(() => {
-    if (syncState.localStatus !== 'saved') return;
-
-    const serialized = JSON.stringify(plan);
-    if (serialized === previousPlanRef.current) return;
-    previousPlanRef.current = serialized;
-
-    // Debounce cloud sync
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
-
-    syncTimeoutRef.current = setTimeout(() => {
-      syncToCloud(plan);
-    }, 3000); // Wait 3s after local save before cloud sync
-
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
-    };
-  }, [plan, syncState.localStatus, syncToCloud]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
-    };
-  }, []);
 
   // Check for saved data on mount
   useEffect(() => {
@@ -393,134 +182,42 @@ export function usePlanAutoSave<T extends object>(
     });
   }, [lastSaved]);
 
-  // Manual retry
-  const retrySync = useCallback(() => {
-    setSyncState(prev => ({ ...prev, retryCount: 0, errorMessage: null }));
-    syncToCloud(plan);
-  }, [plan, syncToCloud]);
-
-  // Force sync now
-  const forceSyncNow = useCallback(() => {
-    forceLocalSave();
-    syncToCloud(plan);
-  }, [forceLocalSave, plan, syncToCloud]);
-
   return {
-    // Local save status
     lastSaved,
     isSaving,
     showRestorePrompt,
     savedTimestamp: getSavedTimestamp(),
-
-    // Cloud sync status
-    syncState,
-    isOnline,
-
-    // Actions
     handleRestore,
     handleDismissRestore,
     formatLastSaved,
-    forceSave: forceLocalSave,
-    forceSyncNow,
-    retrySync,
+    forceSave,
     clearSavedData,
   };
 }
 
-// =============================================================================
-// AUTO-SAVE INDICATOR COMPONENT
-// =============================================================================
-
-interface AutoSaveIndicatorProps {
-  isSaving: boolean;
-  lastSaved: string | null;
-  cloudStatus?: CloudStatus;
-  onRetry?: () => void;
-  className?: string;
-}
-
+// Save indicator component
 export function AutoSaveIndicator({
   isSaving,
   lastSaved,
-  cloudStatus = 'idle',
-  onRetry,
   className = '',
-}: AutoSaveIndicatorProps) {
-  // Determine what to show
-  const getIndicator = () => {
-    // Saving locally
-    if (isSaving) {
-      return {
-        dotClass: 'bg-amber-400 animate-pulse',
-        text: 'Zapisywanie...',
-        textClass: 'text-amber-400',
-      };
-    }
-
-    // Cloud syncing
-    if (cloudStatus === 'syncing') {
-      return {
-        dotClass: 'bg-blue-400 animate-pulse',
-        text: 'Synchronizacja...',
-        textClass: 'text-blue-400',
-      };
-    }
-
-    // Error
-    if (cloudStatus === 'error') {
-      return {
-        dotClass: 'bg-red-400',
-        text: 'Błąd synchronizacji',
-        textClass: 'text-red-400',
-        showRetry: true,
-      };
-    }
-
-    // Offline
-    if (cloudStatus === 'offline') {
-      return {
-        dotClass: 'bg-yellow-400',
-        text: lastSaved ? `Offline - ${lastSaved}` : 'Offline',
-        textClass: 'text-yellow-400',
-      };
-    }
-
-    // Synced
-    if (cloudStatus === 'synced' && lastSaved) {
-      return {
-        dotClass: 'bg-emerald-400',
-        text: `Zsynchronizowano ${lastSaved}`,
-        textClass: 'text-slate-500',
-      };
-    }
-
-    // Saved locally only
-    if (lastSaved) {
-      return {
-        dotClass: 'bg-emerald-400',
-        text: `Zapisano ${lastSaved}`,
-        textClass: 'text-slate-500',
-      };
-    }
-
-    return null;
-  };
-
-  const indicator = getIndicator();
-  if (!indicator) return null;
-
+}: {
+  isSaving: boolean;
+  lastSaved: string | null;
+  className?: string;
+}) {
   return (
     <div className={`flex items-center gap-2 text-sm ${className}`}>
-      <div className={`w-2 h-2 rounded-full ${indicator.dotClass}`} />
-      <span className={indicator.textClass}>{indicator.text}</span>
-      {indicator.showRetry && onRetry && (
-        <button
-          onClick={onRetry}
-          className="text-xs text-blue-400 hover:text-blue-300 underline ml-1"
-        >
-          Ponów
-        </button>
-      )}
+      {isSaving ? (
+        <>
+          <div className="w-2 h-2 bg-ember-400 rounded-full animate-pulse" />
+          <span className="text-slate-400">Zapisywanie...</span>
+        </>
+      ) : lastSaved ? (
+        <>
+          <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+          <span className="text-slate-500">Zapisano {lastSaved}</span>
+        </>
+      ) : null}
     </div>
   );
 }

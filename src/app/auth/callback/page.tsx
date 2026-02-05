@@ -41,15 +41,15 @@ function AuthCallbackContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
             <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Błąd logowania</h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">{error}</p>
+          <h2 className="text-xl font-semibold text-white mb-2">Błąd logowania</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
           <button
             onClick={() => router.push('/login')}
             className="px-6 py-2 bg-ember-500 text-white rounded-xl hover:bg-ember-600 transition-colors"
@@ -62,10 +62,10 @@ function AuthCallbackContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin w-10 h-10 border-3 border-ember-500 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-slate-600 dark:text-slate-400">Trwa logowanie...</p>
+        <p className="text-slate-400">Trwa logowanie...</p>
       </div>
     </div>
   );
@@ -73,14 +73,16 @@ function AuthCallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 dark:bg-night-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-10 h-10 border-3 border-ember-500 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">Trwa logowanie...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin w-10 h-10 border-3 border-ember-500 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-slate-400">Trwa logowanie...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <AuthCallbackContent />
     </Suspense>
   );

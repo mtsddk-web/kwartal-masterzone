@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QuarterlyPlan, QuarterType, CustomQuarterMonths, emptyPlan, getPreviousQuarter } from '@/types/plan';
+import { QuarterlyPlan, emptyPlan, getPreviousQuarter } from '@/types/plan';
 import ProgressBar from './ProgressBar';
 import QuarterSelector from './QuarterSelector';
 import PlanSummary from './PlanSummary';
@@ -154,12 +154,8 @@ export default function PlanningWizard() {
           <QuarterSelector
             quarter={plan.quarter}
             year={plan.year}
-            quarterType={plan.quarterType}
-            customQuarterMonths={plan.customQuarterMonths}
             onQuarterChange={(q) => updatePlan('quarter', q)}
             onYearChange={(y) => updatePlan('year', y)}
-            onQuarterTypeChange={(t) => updatePlan('quarterType', t)}
-            onCustomMonthsChange={(m) => updatePlan('customQuarterMonths', m)}
           />
         );
       case 1:
@@ -208,8 +204,6 @@ export default function PlanningWizard() {
           <MilestonesStep
             milestones={plan.milestones}
             quarter={plan.quarter}
-            quarterType={plan.quarterType}
-            customQuarterMonths={plan.customQuarterMonths}
             onChange={(m) => updatePlan('milestones', m)}
           />
         );

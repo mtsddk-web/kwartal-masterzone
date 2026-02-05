@@ -13,7 +13,7 @@ export default function PlanSummary({ plan, onEdit }: PlanSummaryProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const months = getQuarterMonths(plan.quarter, plan.quarterType, plan.customQuarterMonths);
+  const months = getQuarterMonths(plan.quarter);
 
   const generateMarkdown = (): string => {
     const lines: string[] = [
